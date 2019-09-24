@@ -1,6 +1,7 @@
 build/
 GEFS/Debug/
 GEFS/Release/
+*.log
 
 # Prerequisites
 *.d
@@ -9,7 +10,7 @@ GEFS/Release/
 *.slo
 *.lo
 *.o
-*.obj
+#*.obj
 
 # Precompiled Headers
 *.gch
