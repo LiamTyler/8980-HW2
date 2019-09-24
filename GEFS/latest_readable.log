@@ -1,0 +1,59 @@
+arguments: C:\\Users\\Tyler\\Downloads\\GEFS-GameEngineStarterCode\\GEFS-GameEngineStarterCode\\GEFS\\Debug\\engine.exe SimpleExample/
+Current dir: C:\Users\Tyler\Downloads\GEFS-GameEngineStarterCode\GEFS-GameEngineStarterCode\GEFS
+File verbosity level: 0
+date       time         ( uptime  ) [ thread name/id ]                   file:line     v| 
+2019-09-23 17:20:06.639 (   0.003s) [main thread     ]             loguru.cpp:761   INFO| Logging to 'latest_readable.log', mode: 'w', verbosity: 0
+2019-09-23 17:20:06.640 (   0.004s) [main thread     ]               main.cpp:88    INFO| Loading game folder SimpleExample/
+2019-09-23 17:20:06.640 (   0.005s) [main thread     ]               main.cpp:359   INFO| { configEngine
+2019-09-23 17:20:06.641 (   0.005s) [main thread     ]               main.cpp:367   INFO| .   Loading Config File: settings.cfg
+2019-09-23 17:20:06.642 (   0.006s) [main thread     ]               main.cpp:359   INFO| } 0.002 s: configEngine
+2019-09-23 17:20:06.761 (   0.125s) [main thread     ]          materials.cpp:21    INFO| { loadMaterials
+2019-09-23 17:20:06.764 (   0.128s) [main thread     ]          materials.cpp:21    INFO| } 0.003 s: loadMaterials
+2019-09-23 17:20:06.764 (   0.129s) [main thread     ]               main.cpp:105   INFO| Read 11 materials
+
+2019-09-23 17:20:06.765 (   0.129s) [main thread     ]             models.cpp:72    INFO| { loadModel
+2019-09-23 17:20:06.765 (   0.129s) [main thread     ]             models.cpp:81    INFO| .   Loading Model File: SimpleExample/Prefabs.txt
+2019-09-23 17:20:06.765 (   0.130s) [main thread     ]             models.cpp:87    INFO| .   File 'SimpleExample/Prefabs.txt' is 943 bytes long.
+2019-09-23 17:20:06.766 (   0.130s) [main thread     ]             models.cpp:114   INFO| .   Creating PreFab Model with name: TeapotLowPoly
+2019-09-23 17:20:06.846 (   0.211s) [main thread     ]             models.cpp:114   INFO| .   Creating PreFab Model with name: TeapotHighPoly
+2019-09-23 17:20:07.531 (   0.895s) [main thread     ]             models.cpp:114   INFO| .   Creating PreFab Model with name: Teapot
+2019-09-23 17:20:07.531 (   0.896s) [main thread     ]             models.cpp:114   INFO| .   Creating PreFab Model with name: Sphere
+2019-09-23 17:20:07.605 (   0.970s) [main thread     ]             models.cpp:114   INFO| .   Creating PreFab Model with name: Cube
+2019-09-23 17:20:07.607 (   0.971s) [main thread     ]             models.cpp:114   INFO| .   Creating PreFab Model with name: FancyCube
+2019-09-23 17:20:07.617 (   0.981s) [main thread     ]             models.cpp:114   INFO| .   Creating PreFab Model with name: Cube2
+2019-09-23 17:20:07.963 (   1.327s) [main thread     ]             models.cpp:114   INFO| .   Creating PreFab Model with name: CubeOuter
+2019-09-23 17:20:07.972 (   1.336s) [main thread     ]             models.cpp:114   INFO| .   Creating PreFab Model with name: CubeInner
+2019-09-23 17:20:07.974 (   1.338s) [main thread     ]             models.cpp:114   INFO| .   Creating PreFab Model with name: VeryFancyCube
+2019-09-23 17:20:07.974 (   1.339s) [main thread     ]             models.cpp:114   INFO| .   Creating PreFab Model with name: Knot
+2019-09-23 17:20:08.322 (   1.686s) [main thread     ]             models.cpp:114   INFO| .   Creating PreFab Model with name: Tile
+2019-09-23 17:20:08.323 (   1.687s) [main thread     ]             models.cpp:114   INFO| .   Creating PreFab Model with name: Floor
+2019-09-23 17:20:08.324 (   1.689s) [main thread     ]             models.cpp:114   INFO| .   Creating PreFab Model with name: FloorPart
+2019-09-23 17:20:08.355 (   1.719s) [main thread     ]             models.cpp:114   INFO| .   Creating PreFab Model with name: Dino
+2019-09-23 17:20:08.401 (   1.766s) [main thread     ]             models.cpp:72    INFO| } 1.637 s: loadModel
+2019-09-23 17:20:08.402 (   1.766s) [main thread     ]               main.cpp:108   INFO| Read 52 models
+
+2019-09-23 17:20:08.402 (   1.766s) [main thread     ]              scene.cpp:19    INFO| { loadScene
+2019-09-23 17:20:08.402 (   1.767s) [main thread     ]              scene.cpp:26    INFO| .   Opening Scene/Environment File: SimpleExample/Scene.txt
+2019-09-23 17:20:08.403 (   1.768s) [main thread     ]              scene.cpp:19    INFO| } 0.001 s: loadScene
+2019-09-23 17:20:08.404 (   1.768s) [main thread     ]               main.cpp:111   INFO| Loaded scene file
+
+2019-09-23 17:20:08.701 (   2.066s) [main thread     ]      windowmanager.cpp:47    INFO| 
+OpenGL loaded
+
+2019-09-23 17:20:08.702 (   2.066s) [main thread     ]      windowmanager.cpp:48    INFO| Vendor:   NVIDIA Corporation
+
+2019-09-23 17:20:08.702 (   2.066s) [main thread     ]      windowmanager.cpp:49    INFO| Renderer: GeForce GTX 960M/PCIe/SSE2
+
+2019-09-23 17:20:08.702 (   2.067s) [main thread     ]      windowmanager.cpp:50    INFO| Version:  3.3.0 NVIDIA 411.31
+
+
+2019-09-23 17:20:08.703 (   2.067s) [main thread     ]      windowmanager.cpp:19    INFO| { setWindowSize
+2019-09-23 17:20:08.703 (   2.068s) [main thread     ]      windowmanager.cpp:20    INFO| .   Attempting to create a Windowed display of size 1120x700
+2019-09-23 17:20:08.704 (   2.068s) [main thread     ]      windowmanager.cpp:25    INFO| .   Created a window of size 1120x700
+2019-09-23 17:20:08.704 (   2.068s) [main thread     ]      windowmanager.cpp:19    INFO| } 0.001 s: setWindowSize
+2019-09-23 17:20:08.972 (   2.336s) [main thread     ]    renderingsystem.cpp:359   INFO| Created Colider Circle with 360 verts
+2019-09-23 17:20:08.973 (   2.338s) [main thread     ]             skybox.cpp:37    INFO| { loadCubemap
+2019-09-23 17:20:09.932 (   3.296s) [main thread     ]             skybox.cpp:37    INFO| } 0.959 s: loadCubemap
+2019-09-23 17:20:09.937 (   3.301s) [main thread     ]               main.cpp:134   INFO| Loading Gamescript: 'SimpleExample/main.lua'
+2019-09-23 17:20:09.939 (   3.303s) [main thread     ]               main.cpp:142   INFO| Script Loaded without Error.
+2019-09-23 17:21:16.890 (  70.254s) [main thread     ]             loguru.cpp:477   INFO| atexit
