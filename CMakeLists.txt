@@ -34,7 +34,7 @@ endif()
 include_directories(${SDL2_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR})
 
  
-file(GLOB srcFiles engineCode/*.cpp external/*.cpp)
+file(GLOB srcFiles engineCode/* external/*.cpp)
 #message(STATUS ${srcFiles} )
  
 file(GLOB glad_src glad/*.c)

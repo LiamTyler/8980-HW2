@@ -56,11 +56,24 @@ setModelMaterial(id,"Shiny Red Plastic")
 --setModelMaterial(id,"Steel")
 animatedModels[id] = true
 rotYVelModel[id] = 1
+
+id = addModel("Teapot2",0,0,0)
+setModelMaterial(id,"Gold")
+animatedModels[id] = true
+rotYVelModel[id] = 1
+
+id = addModel("Chalet",0,0,0)
+--setModelMaterial(id,"Gold")
+animatedModels[id] = true
+rotYVelModel[id] = 1
+
 id = addModel("FloorPart",0,0,0)
 placeModel(id,0,-.02,0)
 scaleModel(id,3,1,3)
 setModelMaterial(id,"Gold")
 piller = addModel("Dino",0,0,-.15)  --VeryFancyCube
+
+
 --placeModel(piller,-1.5,1.5,0.5)
 --scaleModel(piller,.5,0.5,1.5)
 --animatedModels[piller] = true

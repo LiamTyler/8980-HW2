@@ -17,6 +17,19 @@ flatModel = teapot.txt
 child [TeapotHighPoly]
 #child [TeapotLowPoly]
 
+[Teapot2]
+translate .25 1 0
+child [TeapotHighPoly]
+
+[ChaletModel]
+translate 1 .5 0
+rotate 90 -1 0 0
+objModel = chalet.obj  
+
+[Chalet]
+translate 0 1 0
+child [ChaletModel]
+
 [Sphere]
 flatModel = sphere.txt   
 

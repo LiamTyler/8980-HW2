@@ -10,7 +10,7 @@ static char* readShaderSource(const char* shaderFile){
 	char *buffer;
 
 	// open the file containing the text of the shader code
-	fp = fopen(shaderFile, "r");
+	fp = fopen(shaderFile, "rb");
 
 	// check for errors in opening the file
 	if (fp == NULL) {
