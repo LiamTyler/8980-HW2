@@ -7,12 +7,19 @@
 #include <vector>
 #include <string>
 
+struct AABB
+{
+    glm::vec3 min;
+    glm::vec3 max;
+};
+
 struct Model{
   std::string name = "**UNNAMED Model**";
 	int ID = -1;
+    AABB aabb;
 	glm::mat4 transform;
 	glm::mat4 modelOffset; //Just for placing geometry, not passed down the scene graph
-	float* modelData = 0;
+	float* modelData = nullptr;
 	int startVertex;
 	int numVerts = 0;
 	int numChildren = 0;

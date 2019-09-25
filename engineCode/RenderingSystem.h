@@ -12,7 +12,7 @@ extern bool xxx; //
 //Main geometry drawing functions
 void initPBRShading();
 void setPBRShaderUniforms(glm::mat4 view, glm::mat4 proj, glm::mat4 lightViewMatrix, glm::mat4 lightProjectionMatrix, bool useShadowMap);
-void drawSceneGeometry(std::vector<Model*> toDraw);
+void drawSceneGeometry(std::vector<Model*> toDraw, glm::mat4 view, glm::mat4 proj);
 
 //HDR render targets
 void initHDRBuffers();
@@ -32,5 +32,8 @@ void cleanupBuffers();
 //Global values we write out:
 extern int totalTriangles;
 extern GLuint modelsVBO;
+
+//Debug Cube
+void initUnitCube();
 
 #endif //RENDERING_H

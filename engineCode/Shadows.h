@@ -8,7 +8,7 @@
 void initShadowMapping();
 void initShadowBuffers();
 void computeShadowDepthMap(glm::mat4 lightView, glm::mat4 lightProjection, std::vector<Model*> toDraw);
-void drawGeometryShadow(int shaderProgram, Model model, Material material, glm::mat4 transform);
+void drawGeometryShadow(int shaderProgram, const Model& model, Material material, glm::mat4 transform);
 
 //Configuration values that can be set:
 extern unsigned int shadowMapWidth, shadowMapHeight;

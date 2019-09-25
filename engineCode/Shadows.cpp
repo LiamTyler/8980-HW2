@@ -56,7 +56,7 @@ void initShadowBuffers(){
 //A special draw call for shadow mapping because
 //1. Not everything casts a shadow
 //2. The shadow shader is much simpler (e.g, no color is needed)
-void drawGeometryShadow(int shaderProgram, Model model, Material material, glm::mat4 transform){
+void drawGeometryShadow(int shaderProgram, const Model& model, Material material, glm::mat4 transform){
 	//printf("Model: %s, num Children %d\n",model.name.c_str(), model.numChildren);
 	//printf("Material ID: %d\n", model.materialID);
 	if (model.materialID >= 0) material = materials[model.materialID]; 

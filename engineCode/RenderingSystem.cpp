@@ -28,9 +28,12 @@ GLint xxxID;
 
 GLuint colliderVAO; //Build a Vertex Array Object for the collider
 
-void drawGeometry(Model model, int matID, glm::mat4 transform = glm::mat4(), glm::vec2 textureWrap=glm::vec2(1,1), glm::vec3 modelColor=glm::vec3(1,1,1));
+GLuint unitCube;
+GLuint unitCubeVAO;
 
-void drawGeometry(Model model, int materialID, glm::mat4 transform, glm::vec2 textureWrap, glm::vec3 modelColor){
+void drawGeometry(const Model& model, int matID, glm::mat4 transform = glm::mat4(), glm::vec2 textureWrap=glm::vec2(1,1), glm::vec3 modelColor=glm::vec3(1,1,1));
+
+void drawGeometry(const Model& model, int materialID, glm::mat4 transform, glm::vec2 textureWrap, glm::vec3 modelColor){
 	//printf("Model: %s, num Children %d\n",model.name.c_str(), model.numChildren);
 	//printf("Material ID: %d (passed in id = %d)\n", model.materialID,materialID);
 	//printf("xyx %f %f %f %f\n",model.transform[0][0],model.transform[0][1],model.transform[0][2],model.transform[0][3]);
@@ -214,6 +217,7 @@ void initHDRBuffers(){
 
 //------------ PBR Shader ---------
 Shader PBRShader;
+Shader debugShader;
 
 GLint posAttrib, texAttrib, normAttrib;
 GLint uniView,uniInvView, uniProj;
@@ -396,7 +400,16 @@ void updatePRBShaderSkybox(){
 	}
 }
 
-void drawSceneGeometry(vector<Model*> toDraw){
+void drawSceneGeometry(vector<Model*> toDraw, glm::mat4 view, glm::mat4 proj){
+
+    debugShader.bind();
+    glBindVertexArray(unitCubeVAO);
+    GLint VP = glGetUniformLocation(debugShader.ID,"VP");
+    auto viewProj = proj * view;
+    glUniformMatrix4fv(VP, 1, GL_FALSE, glm::value_ptr(viewProj));
+    glDrawArrays(GL_LINES,0,24);
+
+    PBRShader.bind();
 	glBindVertexArray(modelsVAO);
 
 	glm::mat4 I;
@@ -477,4 +490,75 @@ void cleanupBuffers(){
   glDeleteVertexArrays(1, &modelsVAO);
 	glDeleteVertexArrays(1, &colliderVAO);
 	//TODO: Clearn up the other VAOs and VBOs
+}
+
+
+void initUnitCube()
+{
+    debugShader = Shader("shaders/debugVert.glsl", "shaders/debugFrag.glsl");
+	debugShader.init();
+
+    glGenBuffers(1, &unitCube);
+
+    glm::vec3 pts[24];
+    glm::vec3 cubePts[8];
+    
+    cubePts[0] = glm::vec3(-1,-1,-1);   // bbl
+    cubePts[1] = glm::vec3(1,-1,-1);    // bbr
+    cubePts[2] = glm::vec3(-1,1,-1);    // btl
+    cubePts[3] = glm::vec3(1,1,-1);     // btr
+    cubePts[4] = glm::vec3(-1,-1,1);    // fbl
+    cubePts[5] = glm::vec3(1,-1,1);     // fbr
+    cubePts[6] = glm::vec3(-1,1,1);     // ftl
+    cubePts[7] = glm::vec3(1,1,1);      // ftr
+    
+
+    pts[0] = cubePts[0]; // bbl
+    pts[1] = cubePts[1]; // bbr
+    
+    pts[2] = cubePts[1]; // bbr
+    pts[3] = cubePts[3]; // btr
+    
+    pts[4] = cubePts[3]; // btr
+    pts[5] = cubePts[2]; // btl
+    
+    pts[6] = cubePts[2]; // btl
+    pts[7] = cubePts[0]; // bbl
+    
+    pts[8] = cubePts[4]; // fbl
+    pts[9] = cubePts[5]; // fbr
+    
+    pts[10] = cubePts[5]; // fbr
+    pts[11] = cubePts[7]; // ftr
+    
+    pts[12] = cubePts[7]; // ftr
+    pts[13] = cubePts[6]; // ftl
+    
+    pts[14] = cubePts[6]; // ftl
+    pts[15] = cubePts[4]; // fbl
+    
+    pts[16] = cubePts[4]; // fbl
+    pts[17] = cubePts[0]; // bbl
+    
+    pts[18] = cubePts[5]; // fbr
+    pts[19] = cubePts[1]; // bbr
+    
+    pts[20] = cubePts[6]; // ftl
+    pts[21] = cubePts[2]; // btl
+    
+    pts[22] = cubePts[7]; // ftr
+    pts[23] = cubePts[3]; // btr
+    
+    glBindBuffer(GL_ARRAY_BUFFER, unitCube);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(pts), pts, GL_STATIC_DRAW);
+
+    glGenVertexArrays(1, &unitCubeVAO);
+
+    glBindVertexArray(unitCubeVAO);
+
+    GLint posAttrib = glGetAttribLocation(debugShader.ID, "position");
+	glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	  //Attribute, vals/attrib., type, normalized?, stride, offset
+	  //Binds to VBO current GL_ARRAY_BUFFER 
+	glEnableVertexAttribArray(posAttrib);
 }
