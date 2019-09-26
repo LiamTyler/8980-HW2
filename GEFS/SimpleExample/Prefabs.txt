@@ -30,46 +30,46 @@ child [TeapotHighPoly]
 #translate 0 1 0
 #child [ChaletModel]
 
-[Sphere]
-flatModel = sphere.txt   
+#[Sphere]
+#flatModel = sphere.txt   
 
-[Cube]
-flatModel = cube.txt
+#[Cube]
+#flatModel = cube.txt
 
-[FancyCube]
-scale 0.39
-objModel = fancyCube.obj
+#[FancyCube]
+#scale 0.39
+#objModel = fancyCube.obj
 
-[Cube2]
-scale 1
-flatModel = knot.txt
+#[Cube2]
+#scale 1
+#flatModel = knot.txt
 
-[CubeOuter]
+#[CubeOuter]
 material [Dark Polished Wood] #[Polished Wood]
 objModel = cubeOuter.obj
 
-[CubeInner]
-material [Glowly White]
-objModel = simpleCube.obj
+#[CubeInner]
+#material [Glowly White]
+#objModel = simpleCube.obj
 
-[VeryFancyCube]
-scale 0.39
-child [CubeOuter]
-child [CubeInner]
+#[VeryFancyCube]
+#scale 0.39
+#child [CubeOuter]
+#child [CubeInner]
 
-[Knot]
-textureWrap 2 1.5
-scalexyz .9 .9 .75
-flatModel = knot.txt
+#[Knot]
+#textureWrap 2 1.5
+#scalexyz .9 .9 .75
+#flatModel = knot.txt
 
-[Tile]
-scalexyz 1 1 .1
-flatModel = cube.txt 
+#[Tile]
+#scalexyz 1 1 .1
+#flatModel = cube.txt 
 
-[Floor]
-scalexyz 1 1 .5
-material [Clay]
-flatModel = cube.txt 
+#[Floor]
+#scalexyz 1 1 .5
+#material [Clay]
+#flatModel = cube.txt 
 
 [FloorPart]
 scalexyz 0.5 0.5 0.5

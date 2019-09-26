@@ -13,6 +13,10 @@ inline std::ostream& operator<<( std::ostream& out, const glm::vec4& v )
     return out << v.x << " " << v.y << " " << v.z << " " << v.w;
 }
 
+inline std::ostream& operator<<( std::ostream& out, const glm::mat4& m )
+{
+    return out << m[0] << "\n" << m[1] << "\n" << m[2] << "\n" << m[3];
+}
 
 class Frustum
 {
