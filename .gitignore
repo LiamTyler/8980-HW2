@@ -1,4 +1,6 @@
 build/
+build_debug/
+GEFS/engine
 GEFS/Debug/
 GEFS/Release/
 *.log

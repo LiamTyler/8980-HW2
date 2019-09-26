@@ -17,7 +17,7 @@ using std::string;
 using std::ifstream;
 using std::copy;
 
-Model models[4000];
+Model models[100000];
 int numModels = 0;
 
 void resetModels(){
@@ -42,7 +42,7 @@ void loadAllModelsTo1VBO(GLuint vbo){
         copy(models[i].modelData,models[i].modelData + models[i].numVerts*8,allModelData + models[i].startVertex*8);
     }
     glBufferData(GL_ARRAY_BUFFER,totalVertexCount*8*sizeof(float),
-                     allModelData,GL_STATIC_DRAW); //upload model data to the VBO
+            allModelData,GL_STATIC_DRAW); //upload model data to the VBO
 }
 
 int addModel(string modelName){

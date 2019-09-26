@@ -258,11 +258,12 @@ int main(int argc,char *argv[]){
         //------ PASS 1 - Shadow map ----------------------
         static mat4 lightProjectionMatrix,lightViewMatrix;
 
+        useShadowMap = false;
         if(useShadowMap && curScene.shadowLight.castShadow){
             //TODO: We can re-use the lightViewMatrix and lightProjectionMatrix if the light doesn't move @performance
             lightProjectionMatrix = glm::ortho(curScene.shadowLight.frustLeft,curScene.shadowLight.frustRight,
-                                                                                    curScene.shadowLight.frustTop,curScene.shadowLight.frustBot,
-                                                                                    curScene.shadowLight.frustNear,curScene.shadowLight.frustFar);
+                    curScene.shadowLight.frustTop,curScene.shadowLight.frustBot,
+                    curScene.shadowLight.frustNear,curScene.shadowLight.frustFar);
 
             static vec3 lightDir,lightPos,lightUp;
             static float lightDist;
@@ -279,20 +280,23 @@ int main(int argc,char *argv[]){
 
         //------ PASS 2 - Main (PBR) Shading Pass --------------------
 
-        mat4 view = glm::lookAt(camPos, //Camera Position
-                                                                lookatPoint, //Point to look at (camPos + camDir)
-                                                            camUp);     //Camera Up direction
-        mat4 proj = glm::perspective(FOV * 3.14f/180,screenWidth / (float)screenHeight,nearPlane,farPlane); //FOV, aspect, near, far
+        mat4 view    = glm::lookAt(camPos, lookatPoint, camUp );
+        float fov    = FOV * 3.14f/180;
+        float aspect = screenWidth / (float) screenHeight;
+        mat4 proj    = glm::perspective( fov, aspect, nearPlane, farPlane );
         //view = lightViewMatrix; proj = lightProjectionMatrix;  //This was useful to visualize the shadowmap
 
-        setPBRShaderUniforms(view,proj,lightViewMatrix,lightProjectionMatrix,useShadowMap);
-        updatePRBShaderSkybox(); //TODO: We only need to do this if the skybox changes
+        BindHDRFramebuffer();
+        // setPBRShaderUniforms(view,proj,lightViewMatrix,lightProjectionMatrix,useShadowMap);
+        // updatePRBShaderSkybox(); //TODO: We only need to do this if the skybox changes
 
         // Clear the screen to default color
         glClearColor(0,0,0,1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        drawSceneGeometry(curScene.toDraw, view,proj); //Pass 2A: Draw Scene Geometry
+        // drawSceneGeometry(curScene.toDraw, view,proj); //Pass 2A: Draw Scene Geometry
+        drawSceneGeometry( curScene.toDraw, view, proj, lightViewMatrix, lightProjectionMatrix, useShadowMap );
+
         //TODO: Add a pass which draws some items without depth culling (e.g. keys, items)
         if(drawColliders) drawColliderGeometry(); //Pass 2B: Draw Colliders
         drawSkybox(view,proj); //Pass 2C: Draw Skybox / Sky color
@@ -370,7 +374,7 @@ void configEngine(string configFile,string configName){
     CHECK_NOTNULL_F(fp,"Can't open configuration file '%s'",configFile.c_str());
 
     bool useThisConfig = true; //a helper variable to make sure we only use elements related to the config chosen by the user
-  //Loop through reading each line
+    //Loop through reading each line
     while(fgets(rawline,1024,fp)) { //Assumes no line is longer than 1024 characters!
         string line = string(rawline);
         if(rawline[0] == '#' || rawline[0] == ';'){
@@ -433,12 +437,12 @@ void configEngine(string configFile,string configName){
             float val;
             sscanf(rawline,"nearPlane = %f",&val);
             nearPlane = val;
-            LOG_F(1,"Setting Target nearPlane to %d", nearPlane);
+            LOG_F(1,"Setting Target nearPlane to %f", nearPlane);
         } else if(commandStr == "farPlane"){
             float val;
             sscanf(rawline,"farPlane = %f",&val);
             farPlane = val;
-            LOG_F(1,"Setting farPlane to %d", farPlane);
+            LOG_F(1,"Setting farPlane to %f", farPlane);
         } else if(commandStr == "startFullscreen"){
             int val;
             sscanf(rawline,"startFullscreen = %d",&val);
@@ -472,7 +476,7 @@ void Win2PPM(int width,int height){
     int i,j;
     FILE* fptr;
     static int counter = 0;
-    char fname[32];
+    char fname[64];
     unsigned char *image;
 
     // Allocate our buffer for the image 

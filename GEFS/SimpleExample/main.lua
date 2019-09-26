@@ -4,48 +4,44 @@ print("Starting Lua for Simple Example")
 --Todo:
 -- Lua modules (for better organization, and maybe reloading?)
 
-CameraPosX = -3.0
+CameraPosX = 0.0
 CameraPosY = 1.0
-CameraPosZ = 0.0
+CameraPosZ = 5.0
 
-CameraDirX = 1.0
-CameraDirY = -0.0
-CameraDirZ = -0.0
+CameraDirX = 0.0
+CameraDirY = 0.0
+CameraDirZ = -1.0
 
 CameraUpX = 0.0
 CameraUpY = 1.0
 CameraUpZ = 0.0
-
-CameraVelX = 0.0
-CameraVelY = 0.0
-CameraVelZ = 0.0
 
 animatedModels = {}
 velModel = {}
 rotYVelModel = {}
 
 function frameUpdate(dt)
-  frameDT = dt
+    frameDT = dt
 end
 
-theta = 0
+theta = 90 * 3.1415925635 / 180
 function keyHandler(keys)
-  if keys.left then
-    theta = theta + 1 *frameDT
-  end
-  if keys.right then
-    theta = theta - 1 *frameDT
-  end
-  if keys.up then
-    CameraPosX = CameraPosX + 1 * frameDT * CameraDirX
-    CameraPosZ = CameraPosZ + 1 * frameDT * CameraDirZ
-  end
-  if keys.down then
-    CameraPosX = CameraPosX - 1 * frameDT * CameraDirX
-    CameraPosZ = CameraPosZ - 1 * frameDT * CameraDirZ
-  end
-  CameraDirX = math.cos( theta )
-  CameraDirZ = -math.sin( theta )
+    if keys.left then
+        theta = theta + 1 *frameDT
+    end
+    if keys.right then
+        theta = theta - 1 *frameDT
+    end
+    if keys.up then
+        CameraPosX = CameraPosX + 5 * frameDT * CameraDirX
+        CameraPosZ = CameraPosZ + 5 * frameDT * CameraDirZ
+    end
+    if keys.down then
+        CameraPosX = CameraPosX - 5 * frameDT * CameraDirX
+        CameraPosZ = CameraPosZ - 5 * frameDT * CameraDirZ
+    end
+    CameraDirX = math.cos( theta )
+    CameraDirZ = -math.sin( theta )
 end
 
 --id = addModel("Teapot",0,0,0)
@@ -54,9 +50,11 @@ end
 --animatedModels[id] = true
 --rotYVelModel[id] = 1
 
-for r=0,10 do
-    for c=0,10 do
-        id = addModel("Teapot",-30 + 3*r, 0, -30 + 3*c)
+numR = 30
+numC = 30
+for r=0,numR do
+    for c=0,numC do
+        id = addModel("Teapot", -numR / 2 + 1*r, 0, -numC/2 + 1*c )
     end
 end
 
