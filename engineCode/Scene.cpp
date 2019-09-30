@@ -29,6 +29,9 @@ void loadScene(string fileName){
 	// check for errors in opening the file
 	CHECK_NOTNULL_F(fp,"Can't open Scene/Environment file '%s'", fileName.c_str());
 	
+
+	curScene.activeCam = &curScene.cameras[curScene.currentCam];
+
   fseek(fp, 0, SEEK_END); // move position indicator to the end of the file;
   length = ftell(fp);  // return the value of the current position
   LOG_F(1,"File '%s' is %ld bytes long.",fileName.c_str(),length);
@@ -153,7 +156,7 @@ void loadScene(string fileName){
 		else if (commandStr == "CameraFOV"){ 
 			float fov;
 			sscanf(rawline,"CameraFOV = %f", &fov);
-			curScene.mainCam.FOV = fov;
+			curScene.activeCam->FOV = fov;
 			LOG_F(1,"Camera FOV set to: %f",fov);
     }
 	}

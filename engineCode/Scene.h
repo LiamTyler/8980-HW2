@@ -23,16 +23,25 @@ struct Light{
 //TODO: Add point lights (we currently assume all lights are directional)
 
 struct Camera{
+	glm::vec3 camPos;
+	glm::vec3 camDir;
+	glm::vec3 camUp;
+	glm::vec3 lookatPoint;
 	float FOV = 50;
 };
 
 struct Model;
 
+#define DEBUG_CAMERA 0 // TODO: represent cameras better later
+#define MAIN_CAMERA 1
+
 struct Scene{
 	std::string environmentMap = "";
 	Light shadowLight;
 	std::vector<Light> lights;
-	Camera mainCam;
+	Camera cameras[2];
+	unsigned char currentCam = MAIN_CAMERA;
+	Camera* activeCam;
 	glm::mat4 rotSkybox; //skybox orientation
 	bool singleSkyColor = true;
 	glm::vec3 skyColor = glm::vec3(1,1,10);

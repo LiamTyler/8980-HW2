@@ -64,6 +64,8 @@ AudioManager audioManager = AudioManager();
 
 void configEngine(string configFile,string configName);
 
+unsigned char lastActiveCamera = MAIN_CAMERA;
+
 
 int main(int argc,char *argv[]){
     std::cout << "HELLO!" << std::endl;
@@ -183,6 +185,23 @@ int main(int argc,char *argv[]){
                 }
             }
 
+			if (windowEvent.type == SDL_KEYUP && windowEvent.key.keysym.sym == SDLK_d) {
+					//printf("previous Current Camera: %d, lAC: %d\n", curScene.currentCam, lastActiveCamera);
+					if (curScene.currentCam == DEBUG_CAMERA)
+					{
+						printf("Last Active Camera!\n");
+						curScene.currentCam = lastActiveCamera;
+						lastActiveCamera = DEBUG_CAMERA;
+					}
+					else
+					{
+						printf("Debug Camera!\n");
+						lastActiveCamera = curScene.currentCam;
+						curScene.currentCam = DEBUG_CAMERA;
+					}
+					//printf("post Current Camera: %d, lAC: %d\n", curScene.currentCam, lastActiveCamera);
+			}
+
             if(windowEvent.type == SDL_KEYUP && windowEvent.key.keysym.sym == SDLK_r){
                 printf("Re-loading Materials file!\n");
                 resetMaterials();
@@ -232,11 +251,19 @@ int main(int argc,char *argv[]){
         if(delayFrames > 0) SDL_Delay(delayFrames);
         lastTime = (long long)SDL_GetTicks();
 
+		// Get camera from Lua
+		//unsigned char curCam = MAIN_CAMERA;
+		//curScene.currentCam = curCam;
+		//printf("%d", getCamera(L));
+
+		// Set the Active Camera
+		curScene.activeCam = &curScene.cameras[curScene.currentCam];
+
         //Get the camera state from the Lua Script
-        vec3 camPos = getCameraPosFromLau(L);
-        vec3 camDir = getCameraDirFromLau(L);
-        vec3 camUp = getCameraUpFromLau(L);
-        vec3 lookatPoint = camPos + camDir;
+		curScene.activeCam->camPos = getCameraPosFromLau(L);
+		curScene.activeCam->camDir = getCameraDirFromLau(L);
+		curScene.activeCam->camUp = getCameraUpFromLau(L);
+		curScene.activeCam->lookatPoint = curScene.activeCam->camPos + curScene.activeCam->camDir;
 
         //LOG_F(3,"Read Camera from Lua");
 
@@ -247,7 +274,7 @@ int main(int argc,char *argv[]){
         }
 
         //TODO: Allow Lua script to set FOV dynamically (it's currently static)
-        float FOV = curScene.mainCam.FOV;
+        float FOV = curScene.activeCam->FOV;
 
         //Rendering the frame goes over 4 passes:
         // 1. Computing depth map
@@ -269,9 +296,9 @@ int main(int argc,char *argv[]){
             static float lightDist;
             lightDir = curScene.shadowLight.direction;  //TODO: Should the directional light always follow the user's lookat point?
             lightDist = curScene.shadowLight.distance;
-            lightPos = lookatPoint - lightDir*lightDist;
-            lightUp = glm::cross(vec3(lightDir.y,lightDir.x,lightDir.z),lookatPoint-lightPos);
-            lightViewMatrix = glm::lookAt(lightPos,lookatPoint,lightUp);
+            lightPos = curScene.activeCam->lookatPoint - lightDir*lightDist;
+            lightUp = glm::cross(vec3(lightDir.y,lightDir.x,lightDir.z), curScene.activeCam->lookatPoint-lightPos);
+            lightViewMatrix = glm::lookAt(lightPos, curScene.activeCam->lookatPoint, lightUp);
 
             computeShadowDepthMap(lightViewMatrix,lightProjectionMatrix,curScene.toDraw);
         }
@@ -280,10 +307,37 @@ int main(int argc,char *argv[]){
 
         //------ PASS 2 - Main (PBR) Shading Pass --------------------
 
-        mat4 view    = glm::lookAt(camPos, lookatPoint, camUp );
-        float fov    = FOV * 3.14f/180;
-        float aspect = screenWidth / (float) screenHeight;
-        mat4 proj    = glm::perspective( fov, aspect, nearPlane, farPlane );
+
+
+        mat4 view = glm::lookAt( curScene.activeCam->camPos, //Camera Position
+								 curScene.activeCam->lookatPoint, //Point to look at (camPos + camDir)
+								 curScene.activeCam->camUp );     //Camera Up direction
+        mat4 proj = glm::perspective(FOV * 3.14f/180,screenWidth / (float)screenHeight,nearPlane,farPlane); //FOV, aspect, near, far
+
+
+		mat4 otherCamView = glm::lookAt(curScene.cameras[MAIN_CAMERA].camPos, //Camera Position
+										curScene.cameras[MAIN_CAMERA].lookatPoint, //Point to look at (camPos + camDir)
+										curScene.cameras[MAIN_CAMERA].camUp);     //Camera Up direction
+		
+		//glm::mat4 temp = glm::lookAt(curScene.cameras[MAIN_CAMERA].camPos, //Camera Position
+		//	curScene.cameras[MAIN_CAMERA].lookatPoint, //Point to look at (camPos + camDir)
+		//	curScene.cameras[MAIN_CAMERA].camUp);
+		
+		mat4 temp = otherCamView;
+
+		// Zero lookat junk
+		temp[3][0] = 0;
+		temp[3][1] = 0;
+		temp[3][2] = 0;
+		// Get rotation of camera wrt world
+		mat4 otherCamModel = glm::transpose(temp);
+		// setup cam location
+		otherCamModel[3][0] = curScene.cameras[MAIN_CAMERA].camPos.x;
+		otherCamModel[3][1] = curScene.cameras[MAIN_CAMERA].camPos.y;
+		otherCamModel[3][2] = curScene.cameras[MAIN_CAMERA].camPos.z;
+
+		//otherProj = glm::perspective(curScene.cameras[lastActiveCamera].FOV * 3.14f / 180, screenWidth / (float)screenHeight, nearPlane, farPlane); //FOV, aspect, near, far
+
         //view = lightViewMatrix; proj = lightProjectionMatrix;  //This was useful to visualize the shadowmap
 
         BindHDRFramebuffer();
@@ -295,7 +349,7 @@ int main(int argc,char *argv[]){
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // drawSceneGeometry(curScene.toDraw, view,proj); //Pass 2A: Draw Scene Geometry
-        int numDrawn = drawSceneGeometry( curScene.toDraw, view, proj, lightViewMatrix, lightProjectionMatrix, useShadowMap );
+        int numDrawn = drawSceneGeometry( curScene.toDraw, view, proj, otherCamView, otherCamModel, lightViewMatrix, lightProjectionMatrix, useShadowMap );
 
         //TODO: Add a pass which draws some items without depth culling (e.g. keys, items)
         if(drawColliders) drawColliderGeometry(); //Pass 2B: Draw Colliders
@@ -337,7 +391,7 @@ int main(int argc,char *argv[]){
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",1000.0f / ImGui::GetIO().Framerate,ImGui::GetIO().Framerate);
         ImGui::Text("%d Objects in Scene Graph, %d being drawn",numModels, numDrawn );
         ImGui::Text("Total Triangles: %d",totalTriangles);
-        ImGui::Text("Camera Pos %f %f %f",camPos.x,camPos.y,camPos.z);
+        ImGui::Text("Camera Pos %f %f %f", curScene.activeCam->camPos.x, curScene.activeCam->camPos.y, curScene.activeCam->camPos.z);
         ImGui::End();
 
         // Render ImGui

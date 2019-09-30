@@ -433,18 +433,22 @@ void CalculateFinalModelMatrix( Model& model, glm::mat4 transform = glm::mat4() 
     }
 }
 
-int drawSceneGeometry(const vector<Model*>& toDraw, const glm::mat4& view, const glm::mat4& proj,
+int drawSceneGeometry(const vector<Model*>& toDraw, const glm::mat4& view, const glm::mat4& proj, const glm::mat4& otherCamView, glm::mat4& otherCamModel,
         const glm::mat4& lightViewMatrix, const glm::mat4& lightProjectionMatrix, bool useShadowMap )
 {
-    debugShader.bind();
-    glBindVertexArray(unitCubeVAO);
-    GLint VP = glGetUniformLocation(debugShader.ID,"VP");
-    auto viewProj = view * proj;
-    glUniformMatrix4fv(VP, 1, GL_FALSE, glm::value_ptr(viewProj));
-    glDrawArrays(GL_LINES,0,24);
+    
+	if (curScene.currentCam == DEBUG_CAMERA)
+	{
+		// Camera Frustum
+		debugShader.bind();
+		glBindVertexArray(unitCubeVAO);
+		GLint VP = glGetUniformLocation(debugShader.ID,"VP");
+		auto viewProj = proj * view * otherCamModel * glm::inverse(proj);
+		glUniformMatrix4fv(VP, 1, GL_FALSE, glm::value_ptr(viewProj));
+		glDrawArrays(GL_LINES,0,24);
+	}
 
-
-    g_frustum.UpdatePlanesExtract( proj * view );
+    g_frustum.UpdatePlanesExtract( proj * otherCamView );
     /*static int count = 0;
     for (size_t i = 0; i < toDraw.size(); i++ )
     {
