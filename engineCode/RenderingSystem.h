@@ -15,7 +15,7 @@ void initPBRShading();
 void setPBRShaderUniforms(glm::mat4 view, glm::mat4 proj, glm::mat4 lightViewMatrix, glm::mat4 lightProjectionMatrix, bool useShadowMap);
 // void drawSceneGeometry(const std::vector<Model*>& toDraw, glm::mat4 view, glm::mat4 proj);
 
-void drawSceneGeometry(const std::vector<Model*>& toDraw, const glm::mat4& view, const glm::mat4& proj,
+int drawSceneGeometry(const std::vector<Model*>& toDraw, const glm::mat4& view, const glm::mat4& proj,
         const glm::mat4& lightViewMatrix, const glm::mat4& lightProjectionMatrix, bool useShadowMap );
 //HDR render targets
 void initHDRBuffers();

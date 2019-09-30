@@ -12,6 +12,7 @@
 #include <external/stb_image.h>
 
 Frustum g_frustum;
+int g_numDrawn = 0;
 
 using std::vector;
 
@@ -60,10 +61,22 @@ void drawGeometry(const Model& model, int materialID, glm::mat4 transform, glm::
     }
     if (!model.modelData) return;
 
+    glm::vec3 pos = glm::vec3( transform[3] );
+    if ( !g_frustum.AABBIntersect( model.aabb.min + pos, model.aabb.max + pos ) )
+    {
+        return;
+    }
+    ++g_numDrawn;
+
     // transform *= model.modelOffset;
     textureWrap *= model.textureWrap; //TODO: Should textureWrap stack like this?
 
+    //std::cout << "Model: " << model.name << ", id = " << model.ID << std::endl;
+    //std::cout << transform << std::endl;
+    //assert( transform == model.finalTransform );
+    //std::cout << model.finalTransform << std::endl;
     glUniformMatrix4fv(uniModelMatrix, 1, GL_FALSE, glm::value_ptr(transform));
+    //glUniformMatrix4fv(uniModelMatrix, 1, GL_FALSE, glm::value_ptr(model.finalTransform));
 
     glUniform1i(uniUseTextureID, material.textureID >= 0); //textureID of -1 --> no texture
 
@@ -410,15 +423,17 @@ void updatePRBShaderSkybox(){
 
 void CalculateFinalModelMatrix( Model& model, glm::mat4 transform = glm::mat4() )
 {
+    std::cout << "Model: " << model.name << ", id = " << model.ID << std::endl;
     transform *= model.transform;
+    std::cout << transform << std::endl;
     model.finalTransform = transform;
-    for (int i = 0; i < model.numChildren; i++)
+    for ( int i = 0; i < model.numChildren; i++ )
     {
         CalculateFinalModelMatrix( *model.childModel[i], transform );
     }
 }
 
-void drawSceneGeometry(const vector<Model*>& toDraw, const glm::mat4& view, const glm::mat4& proj,
+int drawSceneGeometry(const vector<Model*>& toDraw, const glm::mat4& view, const glm::mat4& proj,
         const glm::mat4& lightViewMatrix, const glm::mat4& lightProjectionMatrix, bool useShadowMap )
 {
     debugShader.bind();
@@ -430,16 +445,15 @@ void drawSceneGeometry(const vector<Model*>& toDraw, const glm::mat4& view, cons
 
 
     g_frustum.UpdatePlanesExtract( proj * view );
-    static int count = 0;
+    /*static int count = 0;
     for (size_t i = 0; i < toDraw.size(); i++ )
     {
-        Model& model = *toDraw[i];
-        CalculateFinalModelMatrix( model );
+        CalculateFinalModelMatrix( *toDraw[i] );
     }
-
 
     culledModels.reserve( toDraw.size() );
     culledModels.resize( 0 );
+
     for (size_t i = 0; i < toDraw.size(); i++ )
     {
         const Model& model = *toDraw[i];
@@ -447,24 +461,29 @@ void drawSceneGeometry(const vector<Model*>& toDraw, const glm::mat4& view, cons
         {
             culledModels.push_back( toDraw[i] );
         }
-    }
-
+    }*/
+    //std::cout << "To draw: " << toDraw.size() << std::endl;
+    //std::cout << "Survived culling: " << culledModels.size() << std::endl;
+    //g_frustum.Print();
     setPBRShaderUniforms( view, proj,lightViewMatrix, lightProjectionMatrix, useShadowMap );
     updatePRBShaderSkybox(); //TODO: We only need to do this if the skybox changes
 
     glBindVertexArray(modelsVAO);
-
-    glm::mat4 I;
-    for (size_t i = 0; i < culledModels.size(); ++i )
+    
+    //std::cout << "\nDrawing\n" << std::endl;
+    //glm::mat4 I;
+    totalTriangles = 0;
+    g_numDrawn = 0;
+    /*for (size_t i = 0; i < culledModels.size(); ++i )
     {
         drawGeometry( *culledModels[i], -1, I );
-    }
-    // glm::mat4 I;
-    // totalTriangles = 0;
-    // for (size_t i = 0; i < toDraw.size(); i++){
-    //     //printf("%s - %d\n",toDraw[i]->name.c_str(),i);
-    //     drawGeometry(*toDraw[i], -1, I);
-    // }
+    }*/
+     for (size_t i = 0; i < toDraw.size(); i++){
+         drawGeometry(*toDraw[i], -1);
+     }
+
+
+    return g_numDrawn;
 }
 
 //-------------  Final Composite --------------

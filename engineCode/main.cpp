@@ -295,7 +295,7 @@ int main(int argc,char *argv[]){
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // drawSceneGeometry(curScene.toDraw, view,proj); //Pass 2A: Draw Scene Geometry
-        drawSceneGeometry( curScene.toDraw, view, proj, lightViewMatrix, lightProjectionMatrix, useShadowMap );
+        int numDrawn = drawSceneGeometry( curScene.toDraw, view, proj, lightViewMatrix, lightProjectionMatrix, useShadowMap );
 
         //TODO: Add a pass which draws some items without depth culling (e.g. keys, items)
         if(drawColliders) drawColliderGeometry(); //Pass 2B: Draw Colliders
@@ -335,7 +335,7 @@ int main(int argc,char *argv[]){
         ImGui::Begin("Frame Info");
         ImGui::Text("Time for Rendering %.0f ms",drawTime);
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",1000.0f / ImGui::GetIO().Framerate,ImGui::GetIO().Framerate);
-        ImGui::Text("%d Objects in Scene Graph, %d being drawn",numModels,(int)curScene.toDraw.size());
+        ImGui::Text("%d Objects in Scene Graph, %d being drawn",numModels, numDrawn );
         ImGui::Text("Total Triangles: %d",totalTriangles);
         ImGui::Text("Camera Pos %f %f %f",camPos.x,camPos.y,camPos.z);
         ImGui::End();
