@@ -31,8 +31,10 @@ elseif(MSVC)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Ox")
 endif()
  
-include_directories(${SDL2_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR})
+include_directories(${SDL2_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR} external)
 
+add_subdirectory(external/meshoptimizer)
+add_subdirectory(lodGenerator)
  
 file(GLOB srcFiles engineCode/* external/*.cpp)
 #message(STATUS ${srcFiles} )

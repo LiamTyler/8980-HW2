@@ -3,6 +3,7 @@ build_debug/
 GEFS/engine
 GEFS/Debug/
 GEFS/Release/
+GEFS/lodGenerator
 *.log
 
 # Prerequisites
