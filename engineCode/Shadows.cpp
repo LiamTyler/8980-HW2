@@ -3,7 +3,7 @@
 #include "GPU-Includes.h"
 #include "Shader.h" 
 
-GLuint shadowVAO, shadowVBO, depthPosAttrib;
+GLuint shadowVAO, shadowVBO, shadowIBO, depthPosAttrib;
 Shader depthShader;
 unsigned int depthMapFBO, depthMapTex;
 unsigned int shadowMapWidth = 1024, shadowMapHeight = 1024;
@@ -22,7 +22,8 @@ void initShadowBuffers(){
 
 	GLuint shadowVBO; //We'll store all our models in one VBO //TODO: Compare to 1 VBO/Model
 	glGenBuffers(1, &shadowVBO); 
-	loadAllModelsTo1VBO(shadowVBO);
+	glGenBuffers(1, &shadowIBO); 
+	loadAllModelsTo1VBO(shadowVBO, shadowIBO);
 
 	depthPosAttrib = glGetAttribLocation(depthShader.ID, "position");
 	glVertexAttribPointer(depthPosAttrib, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), 0);
@@ -74,7 +75,8 @@ void drawGeometryShadow(int shaderProgram, const Model& model, Material material
 	glUniformMatrix4fv(uniModelMatrixShadow, 1, GL_FALSE, glm::value_ptr(transform));
 
 	//printf("start/end %d %d\n",model.startVertex, model.numVerts);
-	glDrawArrays(GL_TRIANGLES, model.startVertex, model.numVerts); //(Primitive Type, Start Vertex, End Vertex) //Draw only 1st object
+	// glDrawArrays(GL_TRIANGLES, model.startVertex, model.numVerts); //(Primitive Type, Start Vertex, End Vertex) //Draw only 1st object
+	glDrawElements(GL_TRIANGLES, model.numIndices, GL_UNSIGNED_INT, (void*)(model.startIndex * sizeof( uint32_t ) ) );
 }
 
 void computeShadowDepthMap(glm::mat4 lightView, glm::mat4 lightProjection, vector<Model*> toDrawShadows){

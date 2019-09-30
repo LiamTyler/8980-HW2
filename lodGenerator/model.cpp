@@ -5,6 +5,9 @@
 #include "serialize.hpp"
 #include <limits>
 
+namespace PG
+{
+
 bool Model::Serialize( std::ofstream& out ) const
 {
     // serialize::Write( out, name );
@@ -248,3 +251,5 @@ void Model::Optimize()
         mesh.Optimize();
     }
 }
+
+} // namespace PG

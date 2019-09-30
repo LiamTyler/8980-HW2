@@ -2,6 +2,7 @@
 #include <fstream>
 
 using namespace std;
+using namespace PG;
 
 int main( int argc, char** argv )
 {

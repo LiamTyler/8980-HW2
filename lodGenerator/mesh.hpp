@@ -3,6 +3,9 @@
 #include "glm/glm.hpp"
 #include <vector>
 
+namespace PG
+{
+
 struct AABB
 {
     glm::vec3 min;
@@ -52,3 +55,5 @@ public:
     size_t   startIndex  = 0;
     std::vector< LODInfo > lods;
 };
+
+} // namespace PG

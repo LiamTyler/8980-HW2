@@ -2,7 +2,7 @@
 
 #include "GPU-Includes.h"
 
-#define TINYOBJLOADER_IMPLEMENTATION // define this in only *one* .cc
+// #define TINYOBJLOADER_IMPLEMENTATION // define this in only *one* .cc
 #include <external/tiny_obj_loader.h>
 
 #include <external/loguru.hpp>
@@ -12,6 +12,9 @@ std::string warn;
 std::string err;
 
 #include <fstream>
+#include "serialize.hpp"
+#include "model.hpp"
+#include "MemoryMapped.h"
 
 using std::string;
 using std::ifstream;
@@ -26,23 +29,37 @@ void resetModels(){
     numModels = 0;
 }
 
-void loadAllModelsTo1VBO(GLuint vbo){
-    glBindBuffer(GL_ARRAY_BUFFER,vbo); //Set vbo i as the active array buffer (Only one buffer can be active at a time)
-    int vextexCount = 0;
+void loadAllModelsTo1VBO(GLuint vbo, GLuint ibo )
+{
+    glBindBuffer(GL_ARRAY_BUFFER,vbo);
+    size_t vextexCount = 0;
+    size_t indexCount  = 0;
     for(int i = 0; i < numModels; i++) {
         models[i].startVertex = vextexCount;
         vextexCount += models[i].numVerts;
+        indexCount += models[i].indices.size();
     }
     int totalVertexCount = vextexCount;
 
-
+    std::vector< uint32_t > indices;
+    indices.reserve( indexCount );
+    uint32_t currIndexOffset = 0;
     float* allModelData = new float[vextexCount*8];
     copy(models[0].modelData,models[0].modelData + models[0].numVerts*8,allModelData);
     for(int i = 0; i < numModels; i++){
         copy(models[i].modelData,models[i].modelData + models[i].numVerts*8,allModelData + models[i].startVertex*8);
+        models[i].startIndex = currIndexOffset;
+        for ( size_t index = 0; index < models[i].indices.size(); ++index )
+        {
+            indices.push_back( currIndexOffset + models[i].indices[index] );
+        }
+        currIndexOffset += (uint32_t) models[i].indices.size();
     }
-    glBufferData(GL_ARRAY_BUFFER,totalVertexCount*8*sizeof(float),
-            allModelData,GL_STATIC_DRAW); //upload model data to the VBO
+    glBufferData(GL_ARRAY_BUFFER,totalVertexCount*8*sizeof(float), allModelData,GL_STATIC_DRAW);
+    delete allModelData;
+
+    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo );
+    glBufferData( GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW );
 }
 
 int addModel(string modelName){
@@ -167,7 +184,8 @@ void loadModel(string fileName){
             }
             LOG_F(1,"Loaded %d lines",numLines);
             models[curModelID].numVerts = numLines/8;
-            AABB aabb ={glm::vec3(FLT_MAX),glm::vec3(FLT_MIN)};
+            AABB aabb = { glm::vec3( FLT_MAX ), glm::vec3( FLT_MIN ) };
+            models[curModelID].indices.resize( numLines/8 );
             for(int i = 0; i < models[curModelID].numVerts; ++i)
             {
                 float vx = models[curModelID].modelData[8*i + 0];
@@ -175,11 +193,32 @@ void loadModel(string fileName){
                 float vz = models[curModelID].modelData[8*i + 2];
                 aabb.min = glm::min(aabb.min,glm::vec3(vx,vy,vz));
                 aabb.max = glm::max(aabb.max,glm::vec3(vx,vy,vz));
+                models[curModelID].indices[i] = i;
             }
+            models[curModelID].numIndices = models[curModelID].indices.size();
             models[curModelID].aabb = aabb;
 
             modelFile.close();
-        } else if(commandStr == "objModel"){
+        }
+        else if ( commandStr == "ffiModel" )
+        {
+            char fname[1024];
+            sscanf( rawline,"ffiModel = %s", fname );
+
+            MemoryMapped memMappedFile;
+            if ( !memMappedFile.open( fname, MemoryMapped::WholeFile, MemoryMapped::SequentialScan ) )
+            {
+                LOG_F( 1, "Could not open fastfile: '%s'", fname );
+                return;
+            }
+
+            char* buffer = (char*) memMappedFile.getData();
+            PG::Model model;
+            model.Deserialize( buffer );
+            memMappedFile.close();
+        }
+        else if (commandStr == "objModel")
+        {
             char objFile[1024];
             sscanf(rawline,"objModel = %s",objFile);
 
@@ -235,6 +274,7 @@ void loadModel(string fileName){
             LOG_F(1,"Loading obj child model %s as IDs: %d",(childName).c_str(),childModelID);
 
             std::vector<float> vertexData;
+            std::vector< uint32_t > indices;
             AABB currentAABB ={glm::vec3(FLT_MAX),glm::vec3(FLT_MIN)};
             // Loop over shapes
             for(size_t s = 0; s < objShapes.size(); s++) {
@@ -266,6 +306,8 @@ void loadModel(string fileName){
                         //Copy vertex data read so far into the model
                         int numAttribs = vertexData.size();
                         models[childModelID].aabb = currentAABB;
+                        models[childModelID].indices = indices;
+                        models[childModelID].numIndices = indices.size();
                         models[childModelID].modelData = new float[numAttribs];
                         std::copy(vertexData.begin(),vertexData.end(),models[childModelID].modelData);
                         models[childModelID].numVerts = numAttribs/8;
@@ -278,6 +320,7 @@ void loadModel(string fileName){
                         LOG_F(1,"Loading obj child model %s as IDs: %d",(childName).c_str(),childModelID);
                         childModelID = addModel(childName);
                         vertexData.clear();
+                        indices.clear();
 
                         //Bind the new material
                         string materialName = objFile+string("-")+objMaterials[curMaterialID].name;
@@ -312,6 +355,7 @@ void loadModel(string fileName){
                         }
                         float vertex[8] ={vx,vy,vz,tx,ty,nx,ny,nz};
                         vertexData.insert(vertexData.end(),vertex,vertex+8); //maybe should be vertexData.insert(vertex.end(),std::begin(vertex),std::end(vertex+)) ie make vertex a vector
+                        indices.push_back( indices.size() );
                         // Optional: vertex colors
                         // tinyobj::real_t red = objAttrib.colors[3*idx.vertex_index+0];
                         // tinyobj::real_t green = objAttrib.colors[3*idx.vertex_index+1];
@@ -326,6 +370,7 @@ void loadModel(string fileName){
             //Copy vertex data read so far into the model
             int numAttribs = vertexData.size();
             models[childModelID].modelData = new float[numAttribs];
+            models[childModelID].indices = indices;
             models[childModelID].aabb = currentAABB;
             std::copy(vertexData.begin(),vertexData.end(),models[childModelID].modelData);
             models[childModelID].numVerts = numAttribs/8;

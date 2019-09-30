@@ -1,6 +1,9 @@
 #include "mesh.hpp"
 #include "meshoptimizer/src/meshoptimizer.h"
 
+namespace PG
+{
+
 void Mesh::Optimize()
 {
     // const size_t kCacheSize = 16;
@@ -77,3 +80,5 @@ void Mesh::Optimize()
 
     indices = combinedIndices;
 }
+
+} // namespace PG

@@ -6,6 +6,9 @@
 #include <string>
 #include <vector>
 
+namespace PG
+{
+
 class Material;
 
 struct ModelCreateInfo
@@ -32,3 +35,5 @@ public:
     std::vector< Mesh > meshes;
     std::vector< std::shared_ptr< Material > > materials;
 };
+
+} // namespace PG

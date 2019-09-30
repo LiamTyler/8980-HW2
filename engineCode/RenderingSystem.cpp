@@ -101,7 +101,8 @@ void drawGeometry(const Model& model, int materialID, glm::mat4 transform, glm::
 
     //printf("start/end %d %d\n",model.startVertex, model.numVerts);
     totalTriangles += model.numVerts/3; //3 verts to a triangle
-    glDrawArrays(GL_TRIANGLES, model.startVertex, model.numVerts); //(Primitive Type, Start Vertex, End Vertex) //Draw only 1st object
+    // glDrawArrays(GL_TRIANGLES, model.startVertex, model.numVerts); //(Primitive Type, Start Vertex, End Vertex) //Draw only 1st object
+	glDrawElements(GL_TRIANGLES, model.numIndices, GL_UNSIGNED_INT, (void*)(model.startIndex * sizeof( uint32_t ) ) );
 }
 
 void drawColliderGeometry(){ //, Material material //TODO: Take in a material for the colliders
@@ -242,7 +243,7 @@ Shader debugShader;
 
 GLint posAttrib, texAttrib, normAttrib;
 GLint uniView,uniInvView, uniProj;
-GLuint modelsVAO, modelsVBO;
+GLuint modelsVAO, modelsVBO, modelsIBO;
 
 void initPBRShading(){
     PBRShader = Shader("shaders/vertexTex.glsl", "shaders/fragmentTex.glsl");
@@ -254,7 +255,8 @@ void initPBRShading(){
 
     //We'll store all our models in one VBO //TODO: We should compare to 1 VBO/model?
     glGenBuffers(1, &modelsVBO); 
-    loadAllModelsTo1VBO(modelsVBO);
+    glGenBuffers(1, &modelsIBO); 
+    loadAllModelsTo1VBO(modelsVBO, modelsIBO );
 
     //Tell OpenGL how to set fragment shader input 
     posAttrib = glGetAttribLocation(PBRShader.ID, "position");
@@ -423,10 +425,10 @@ void updatePRBShaderSkybox(){
 
 void CalculateFinalModelMatrix( Model& model, glm::mat4 transform = glm::mat4() )
 {
-    std::cout << "Model: " << model.name << ", id = " << model.ID << std::endl;
+    // std::cout << "Model: " << model.name << ", id = " << model.ID << std::endl;
     transform *= model.transform;
-    std::cout << transform << std::endl;
-    model.finalTransform = transform;
+    // std::cout << transform << std::endl;
+    // model.finalTransform = transform;
     for ( int i = 0; i < model.numChildren; i++ )
     {
         CalculateFinalModelMatrix( *model.childModel[i], transform );

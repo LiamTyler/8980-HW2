@@ -5,6 +5,9 @@
 #include <fstream>
 #include <vector>
 
+namespace PG
+{
+
 class Material
 {
 public:
@@ -22,3 +25,5 @@ public:
     float Ns;
     std::string map_Kd;
 };
+
+} // namespace PG

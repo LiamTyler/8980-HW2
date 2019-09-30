@@ -1,6 +1,9 @@
 #include "material.hpp"
 #include "serialize.hpp"
 
+namespace PG
+{
+
 bool Material::Serialize( std::ofstream& out ) const
 {
     serialize::Write( out, name );
@@ -94,3 +97,5 @@ bool Material::LoadMtlFile( std::vector< Material >& materials, const std::strin
     return true;
 }
 */
+
+} // namespace PG

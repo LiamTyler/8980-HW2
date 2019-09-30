@@ -211,7 +211,7 @@ int main(int argc,char *argv[]){
                 printf("Re-loading Models file!\n");
                 resetModels();
                 loadModel(gameFolder+modelFile);
-                loadAllModelsTo1VBO(modelsVBO);
+                // loadAllModelsTo1VBO(modelsVBO);
 
                 printf("Re-loading Scene file!\n");
                 resetScene();
