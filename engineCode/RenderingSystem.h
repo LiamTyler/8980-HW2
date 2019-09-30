@@ -12,7 +12,7 @@ extern bool xxx; //
 //Main geometry drawing functions
 void initPBRShading();
 void setPBRShaderUniforms(glm::mat4 view, glm::mat4 proj, glm::mat4 lightViewMatrix, glm::mat4 lightProjectionMatrix, bool useShadowMap);
-void drawSceneGeometry(std::vector<Model*> toDraw, glm::mat4 view, glm::mat4 proj);
+void drawSceneGeometry(std::vector<Model*> toDraw, glm::mat4 view, glm::mat4 proj, glm::mat4 otherModel, glm::mat4 otherProj);
 
 //HDR render targets
 void initHDRBuffers();

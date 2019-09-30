@@ -400,14 +400,19 @@ void updatePRBShaderSkybox(){
 	}
 }
 
-void drawSceneGeometry(vector<Model*> toDraw, glm::mat4 view, glm::mat4 proj){
+void drawSceneGeometry(vector<Model*> toDraw, glm::mat4 view, glm::mat4 proj, glm::mat4 otherModel, glm::mat4 otherProj){
 
-    debugShader.bind();
-    glBindVertexArray(unitCubeVAO);
-    GLint VP = glGetUniformLocation(debugShader.ID,"VP");
-    auto viewProj = proj * view;
-    glUniformMatrix4fv(VP, 1, GL_FALSE, glm::value_ptr(viewProj));
-    glDrawArrays(GL_LINES,0,24);
+
+	if (curScene.currentCam == DEBUG_CAMERA)
+	{
+		// Camera Frustum
+		debugShader.bind();
+		glBindVertexArray(unitCubeVAO);
+		GLint VP = glGetUniformLocation(debugShader.ID,"VP");
+		auto viewProj = proj * view * otherModel * glm::inverse(proj);
+		glUniformMatrix4fv(VP, 1, GL_FALSE, glm::value_ptr(viewProj));
+		glDrawArrays(GL_LINES,0,24);
+	}
 
     PBRShader.bind();
 	glBindVertexArray(modelsVAO);
