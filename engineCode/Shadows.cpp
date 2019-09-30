@@ -8,6 +8,8 @@ Shader depthShader;
 unsigned int depthMapFBO, depthMapTex;
 unsigned int shadowMapWidth = 1024, shadowMapHeight = 1024;
 
+extern int g_currentLOD;
+
 using std::vector;
 
 void initShadowMapping(){
@@ -76,7 +78,8 @@ void drawGeometryShadow(int shaderProgram, const Model& model, Material material
 
 	//printf("start/end %d %d\n",model.startVertex, model.numVerts);
 	// glDrawArrays(GL_TRIANGLES, model.startVertex, model.numVerts); //(Primitive Type, Start Vertex, End Vertex) //Draw only 1st object
-	glDrawElements(GL_TRIANGLES, model.numIndices, GL_UNSIGNED_INT, (void*)(model.startIndex * sizeof( uint32_t ) ) );
+	//glDrawElements(GL_TRIANGLES, model.numIndices, GL_UNSIGNED_INT, (void*)(model.startIndex * sizeof( uint32_t ) ) );
+    glDrawElements(GL_TRIANGLES, model.lods[g_currentLOD].numIndices, GL_UNSIGNED_INT, (void*)(model.lods[g_currentLOD].startIndex * sizeof( uint32_t ) ) );
 }
 
 void computeShadowDepthMap(glm::mat4 lightView, glm::mat4 lightProjection, vector<Model*> toDrawShadows){

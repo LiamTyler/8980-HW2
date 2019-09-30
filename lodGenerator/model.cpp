@@ -103,12 +103,24 @@ bool Model::Deserialize( char*& buffer )
     size_t totalVertices;
     size_t totalIndices;
     serialize::Read( buffer, totalVertices );
-    // vertexBuffer = Gfx::Buffer::Create( buffer, totalVertices * sizeof( Vertex ), Gfx::BufferType::VERTEX, Gfx::BufferUsage::STATIC );
+
+    for ( uint32_t i = 0; i < numMeshes; ++i )
+    {
+        meshes[i].vertices.resize( meshes[i].numVertices );
+        serialize::Read( buffer, (char*)meshes[i].vertices.data(), meshes[i].numVertices * sizeof( PG::Vertex ) );
+    }
     buffer += totalVertices * sizeof( Vertex );
 
     serialize::Read( buffer, totalIndices );
-    // indexBuffer = Gfx::Buffer::Create( buffer, totalIndices * sizeof( uint32_t ), Gfx::BufferType::INDEX, Gfx::BufferUsage::STATIC );
-    buffer += totalVertices * sizeof( Vertex );
+    for ( uint32_t i = 0; i < numMeshes; ++i )
+    {
+        for ( size_t lod = 0; lod < meshes[i].lods.size(); ++lod )
+        {
+            meshes[i].lods[lod].indices.resize( meshes[i].lods[lod].numIndices );
+            serialize::Read( buffer, (char*)meshes[i].lods[lod].indices.data(), meshes[i].lods[lod].numIndices * sizeof( uint32_t ) );
+        }
+    }
+    buffer += totalIndices * sizeof( uint32_t );
 
     return true;
 }
