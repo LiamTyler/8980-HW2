@@ -54,9 +54,11 @@ void loadAllModelsTo1VBO(GLuint vbo, GLuint ibo )
     {
         copy(models[i].modelData,models[i].modelData + models[i].numVerts*8,allModelData + models[i].startVertex*8);
 
+        std::cout << models[i].lods.size() << " " << models[i].numVerts << std::endl;
         for ( size_t lod = 0; lod < models[i].lods.size(); ++lod )
         {
             models[i].lods[lod].startIndex = indices.size();
+            std::cout << "\t" << models[i].lods[lod].startIndex << " " << models[i].lods[lod].numIndices << std::endl;
             for ( size_t index = 0; index < models[i].lods[lod].numIndices; ++index )
             {
                 indices.push_back( currIndexOffset + models[i].lods[lod].indices[index] );
@@ -236,14 +238,24 @@ void loadModel(string fileName){
             for( size_t i = 0; i < model.materials.size(); i++ ){
                 auto pgMat = model.materials[i];
                 Material m;
-                m.name     = pgMat->name;
-                m.col      = pgMat->Kd;
-                m.emissive = pgMat->Ke;
-                //m.ior = objMaterials[i].ior;
+                m.name      = pgMat->name;
+                m.col       = pgMat->Kd;
+                m.emissive  = pgMat->Ke;
+                m.ior       = 1.5;
                 m.roughness = 1/(1+0.01*pgMat->Ns );
+                m.metallic  = 0;
                 //m.metallic = objMaterials[i].metallic;
                 float avgSpec = ( pgMat->Ks.x + pgMat->Ks.y + pgMat->Ks.z ) / 3.0;
                 if(avgSpec > 0.8) m.reflectiveness = (avgSpec-0.8)/0.2;
+                // std::cout << "Model: " << fname << std::endl;
+                // std::cout << "Matname: " << m.name << std::endl;
+                // std::cout << "IOR: " << m.ior << std::endl;
+                // std::cout << "Roughness: " << m.roughness << std::endl;
+                // std::cout << "Metallic: " << m.metallic << std::endl;
+                // std::cout << "reflectiveness: " << m.reflectiveness << std::endl;
+                // std::cout << "color: " << m.col.x << " " << m.col.y << " " << m.col.z << std::endl;
+                // std::cout << "emissive: " << m.emissive.x << " " << m.emissive.y << " " << m.emissive.z << std::endl;
+                // std::cout << std::endl;
 
                 if( pgMat->map_Kd != "" )
                 {
@@ -346,6 +358,16 @@ void loadModel(string fileName){
                 float avgSpec = (objMaterials[i].specular[0]+objMaterials[i].specular[1]+objMaterials[i].specular[2])/3.0;
                 if(avgSpec > 0.8) m.reflectiveness = (avgSpec-0.8)/0.2;
                 memcpy((void*)& m.emissive,(void*)& objMaterials[i].emission[0],sizeof(float)*3); //copy all 3 emissive colors (RGB)
+
+                // std::cout << "Model: " << objFile << std::endl;
+                // std::cout << "Matname: " << m.name << std::endl;
+                // std::cout << "IOR: " << m.ior << std::endl;
+                // std::cout << "Roughness: " << m.roughness << std::endl;
+                // std::cout << "Metallic: " << m.metallic << std::endl;
+                // std::cout << "reflectiveness: " << m.reflectiveness << std::endl;
+                // std::cout << "color: " << m.col.x << " " << m.col.y << " " << m.col.z << std::endl;
+                // std::cout << "emissive: " << m.emissive.x << " " << m.emissive.y << " " << m.emissive.z << std::endl;
+                // std::cout << std::endl;
 
                 if(objMaterials[i].diffuse_texname != ""){
                     string textureName = modelDir + objMaterials[i].diffuse_texname;

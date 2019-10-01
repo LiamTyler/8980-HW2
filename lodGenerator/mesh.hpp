@@ -29,8 +29,8 @@ public:
         return vertex == other.vertex && normal == other.normal && uv == other.uv;
     }
     glm::vec3 vertex;
-    glm::vec3 normal;
     glm::vec2 uv;
+    glm::vec3 normal;
 };
 
 struct LODInfo
