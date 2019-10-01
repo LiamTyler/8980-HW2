@@ -13,7 +13,7 @@
 
 Frustum g_frustum;
 int g_numDrawn = 0;
-int g_currentLOD = 0;
+int g_currentLOD = 2;
 
 using std::vector;
 
@@ -104,7 +104,7 @@ void drawGeometry(const Model& model, int materialID, glm::mat4 transform, glm::
     totalTriangles += model.numVerts/3; //3 verts to a triangle
     // glDrawArrays(GL_TRIANGLES, model.startVertex, model.numVerts); //(Primitive Type, Start Vertex, End Vertex) //Draw only 1st object
 	// glDrawElements(GL_TRIANGLES, model.numIndices, GL_UNSIGNED_INT, (void*)(model.startIndex * sizeof( uint32_t ) ) );
-    int lod = std::min( (int)model.lods.size(), std::max( 0, g_currentLOD ) );
+    int lod = std::min( (int)model.lods.size() - 1, std::max( 0, g_currentLOD ) );
     glDrawElements( GL_TRIANGLES, model.lods[lod].numIndices, GL_UNSIGNED_INT,
                     (void*)(model.lods[lod].startIndex * sizeof( uint32_t ) ) );
 }

@@ -4,6 +4,7 @@
 #include "tiny_obj_loader.h"
 #include "serialize.hpp"
 #include <limits>
+#include <iostream>
 
 namespace PG
 {
@@ -65,13 +66,14 @@ bool Model::Serialize( std::ofstream& out ) const
 
 bool Model::Deserialize( char*& buffer )
 {
-    serialize::Read( buffer, name );
+    // serialize::Read( buffer, name );
     serialize::Read( buffer, aabb.min );
     serialize::Read( buffer, aabb.max );
     uint32_t numMeshes;
     serialize::Read( buffer, numMeshes );
 
     meshes.resize( numMeshes );
+    materials.resize( numMeshes );
     for ( uint32_t i = 0; i < numMeshes; ++i )
     {
         auto mat = std::make_shared< Material >();
@@ -93,6 +95,8 @@ bool Model::Deserialize( char*& buffer )
         {
             serialize::Read( buffer, meshes[i].lods[lod].startIndex );
             serialize::Read( buffer, meshes[i].lods[lod].numIndices );
+            std::cout << "Mesh[" << i << "].lod[" << lod << "].startIndex = " << meshes[i].lods[lod].startIndex << std::endl;
+            std::cout << "Mesh[" << i << "].lod[" << lod << "].numIndices = " << meshes[i].lods[lod].numIndices << std::endl;
         }
 
         serialize::Read( buffer, meshes[i].startIndex );
@@ -109,7 +113,6 @@ bool Model::Deserialize( char*& buffer )
         meshes[i].vertices.resize( meshes[i].numVertices );
         serialize::Read( buffer, (char*)meshes[i].vertices.data(), meshes[i].numVertices * sizeof( PG::Vertex ) );
     }
-    buffer += totalVertices * sizeof( Vertex );
 
     serialize::Read( buffer, totalIndices );
     for ( uint32_t i = 0; i < numMeshes; ++i )
@@ -120,7 +123,6 @@ bool Model::Deserialize( char*& buffer )
             serialize::Read( buffer, (char*)meshes[i].lods[lod].indices.data(), meshes[i].lods[lod].numIndices * sizeof( uint32_t ) );
         }
     }
-    buffer += totalIndices * sizeof( uint32_t );
 
     return true;
 }

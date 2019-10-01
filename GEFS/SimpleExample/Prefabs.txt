@@ -8,6 +8,15 @@ modelDir = ./models/
 scale .9
 flatModel = teapotLowPoly.txt
 
+[ChaletModel]
+translate 0 0 0
+rotate 90 -1 0 0
+ffiModel = chalet.obj.ffi
+
+[Chalet]
+translate 0 0 0
+child [ChaletModel]
+
 [TeapotHighPoly]
 translate 0 .25 0
 #rotate 90 -1 0 0
@@ -20,16 +29,6 @@ child [TeapotHighPoly]
 [Teapot2]
 translate .25 1 0
 child [TeapotHighPoly]
-
-[ChaletModel]
-translate 0 0 0
-rotate 90 -1 0 0
-#ffiModel = chalet.obj.ffi
-objModel = chalet.obj
-
-[Chalet]
-translate 0 0 0
-child [ChaletModel]
 
 #[Sphere]
 #flatModel = sphere.txt   
