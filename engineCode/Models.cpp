@@ -371,6 +371,7 @@ void loadModel(string fileName){
             int numAttribs = vertexData.size();
             models[childModelID].modelData = new float[numAttribs];
             models[childModelID].indices = indices;
+            models[childModelID].numIndices = indices.size();
             models[childModelID].aabb = currentAABB;
             std::copy(vertexData.begin(),vertexData.end(),models[childModelID].modelData);
             models[childModelID].numVerts = numAttribs/8;

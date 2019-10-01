@@ -21,14 +21,14 @@ child [TeapotHighPoly]
 translate .25 1 0
 child [TeapotHighPoly]
 
-#[ChaletModel]
-#translate 1 .5 0
-#rotate 90 -1 0 0
-#objModel = chalet.obj  
+[ChaletModel]
+translate 0 0 0
+rotate 90 -1 0 0
+objModel = chalet.obj  
 
-#[Chalet]
-#translate 0 1 0
-#child [ChaletModel]
+[Chalet]
+translate 0 0 0
+child [ChaletModel]
 
 #[Sphere]
 #flatModel = sphere.txt   
@@ -45,8 +45,8 @@ child [TeapotHighPoly]
 #flatModel = knot.txt
 
 #[CubeOuter]
-material [Dark Polished Wood] #[Polished Wood]
-objModel = cubeOuter.obj
+#material [Dark Polished Wood] #[Polished Wood]
+#objModel = cubeOuter.obj
 
 #[CubeInner]
 #material [Glowly White]
