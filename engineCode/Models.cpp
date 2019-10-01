@@ -49,18 +49,19 @@ void loadAllModelsTo1VBO(GLuint vbo, GLuint ibo )
     indices.reserve( indexCount );
     uint32_t currIndexOffset = 0;
     float* allModelData = new float[vextexCount*8];
-    copy(models[0].modelData,models[0].modelData + models[0].numVerts*8,allModelData);
-    for(int i = 0; i < numModels; i++){
+    copy( models[0].modelData, models[0].modelData + models[0].numVerts*8, allModelData );
+    for( int i = 0; i < numModels; i++ )
+    {
         copy(models[i].modelData,models[i].modelData + models[i].numVerts*8,allModelData + models[i].startVertex*8);
 
-        models[i].startIndex = currIndexOffset;
         for ( size_t lod = 0; lod < models[i].lods.size(); ++lod )
         {
+            models[i].lods[lod].startIndex = currIndexOffset;
             for ( size_t index = 0; index < models[i].lods[lod].numIndices; ++index )
             {
                 indices.push_back( currIndexOffset + models[i].lods[lod].indices[index] );
             }
-            currIndexOffset += (uint32_t) models[i].indices.size();
+            currIndexOffset += (uint32_t) models[i].lods[lod].numIndices;
         }
     }
     glBufferData(GL_ARRAY_BUFFER,totalVertexCount*8*sizeof(float), allModelData,GL_STATIC_DRAW);
@@ -461,6 +462,7 @@ void loadModel(string fileName){
             int numAttribs = vertexData.size();
             models[childModelID].modelData = new float[numAttribs];
             //models[childModelID].indices = indices;
+            //models[childModelID].numIndices = indices.size();
             models[childModelID].lods.resize( 1 );
             models[childModelID].lods[0].indices    = indices;
             models[childModelID].lods[0].numIndices = indices.size();
