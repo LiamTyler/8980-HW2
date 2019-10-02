@@ -44,19 +44,35 @@ function keyHandler(keys)
     CameraDirZ = -math.sin( theta )
 end
 
-id = addModelDynamic("Chalet",0,0.5,2)
+--id = addModelDynamic("Chalet",0,0.5,2)
+id = addModelDynamic("Chalet2",0,0.5,2)
+
 --setModelMaterial(id,"Shiny Red Plastic")
 --setModelMaterial(id,"Steel")
 --animatedModels[id] = true
 --rotYVelModel[id] = 1
 
----numR = 50
----numC = 20
----for r=0,numR do
----    for c=0,numC do
----        id = addModel("Teapot", -numR / 2 + 1*r, 0, -numC/2 + 1*c )
----    end
----end
+numR = 5
+numC = 5
+for r=0,numR do
+    for c=0,numC do
+        id = addModel("Teapot", -numR / 2 + 1*r + 10, 0, -numC/2 + 1*c )
+    end
+end
+
+for r=0,numR do
+    for c=0,numC do
+        id = addModel("Knot", -numR / 2 + 1*r -10, 0, -numC/2 + 1*c )
+    end
+end
+
+--for r=0,numR do
+--	for c=0,numC do
+--        id = addModel("Dino", -numR / 2 + 1*r, 0, -numC/2 + 1*c + 10 )
+--    end
+--end
+
+id = addModel("Dino", 0, 0, 10 )
 
 --id = addModel("Teapot2",0,0,0)
 --setModelMaterial(id,"Gold")

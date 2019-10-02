@@ -196,7 +196,9 @@ void loadModel(string fileName){
             }
             LOG_F(1,"Loaded %d lines",numLines);
             models[curModelID].numVerts = numLines/8;
-            AABB aabb = { glm::vec3( FLT_MAX ), glm::vec3( FLT_MIN ) };
+			
+			// Generate AABB
+            AABB aabb = { glm::vec3( FLT_MAX ), glm::vec3( -FLT_MAX ) };
             models[curModelID].lods.resize( 1 );
             models[curModelID].lods[0].indices.resize( numLines/8 );
             for(int i = 0; i < models[curModelID].numVerts; ++i)
@@ -401,7 +403,7 @@ void loadModel(string fileName){
 
             std::vector< float > vertexData;
             std::vector< uint32_t > indices;
-            AABB currentAABB = { glm::vec3( FLT_MAX ), glm::vec3( FLT_MIN ) };
+            AABB currentAABB = { glm::vec3( FLT_MAX ), glm::vec3( -FLT_MAX ) };
             // Loop over shapes
             for(size_t s = 0; s < objShapes.size(); s++) {
                 int curMaterialID = -1;

@@ -31,11 +31,40 @@ GLint uniColorID, uniEmissiveID, uniUseTextureID, modelColorID;
 GLint metallicID, roughnessID, iorID, reflectivenessID;
 GLint uniModelMatrix, colorTextureID, texScaleID, biasID, pcfID;
 GLint xxxID;
+GLint debugTransform;
+GLint debugColor;
 
 GLuint colliderVAO; //Build a Vertex Array Object for the collider
 
 GLuint unitCube;
 GLuint unitCubeVAO;
+
+// Draws unrotated AABB
+void drawDebugGeometry(const Model& model, const glm::mat4 proj, const glm::mat4 view, glm::mat4 transform = glm::mat4(), glm::vec3 modelColor = glm::vec3(1, 0, 0))
+{
+	transform *= model.transform;
+
+	glm::vec3 extents = (model.aabb.max - model.aabb.min) * .5f;
+	glm::vec3 aabbOffset = (model.aabb.max + model.aabb.min) * .5f;
+
+	//GLint TF = glGetUniformLocation(debugShader.ID, "transform");
+	auto boxTransform = proj * view * glm::translate(glm::mat4(), glm::vec3(transform[3]) + aabbOffset) * glm::scale(glm::mat4(),extents);
+	glUniformMatrix4fv(debugTransform, 1, GL_FALSE, glm::value_ptr(boxTransform));
+	glUniform4fv(debugColor, 1, glm::value_ptr(glm::vec4(modelColor,1)));
+	//glLineWidth(5);
+	glDrawArrays(GL_LINES, 0, 24);
+
+
+	/*if (!g_frustum.AABBIntersect(model.aabb.min + pos, model.aabb.max + pos))
+	{
+		return;
+	}*/
+
+	for (int i = 0; i < model.numChildren; i++) {
+		drawDebugGeometry(*model.childModel[i], proj, view, transform, modelColor);
+	}
+}
+
 
 void drawGeometry(const Model& model, int matID, glm::mat4 transform = glm::mat4(), glm::vec2 textureWrap=glm::vec2(1,1), glm::vec3 modelColor=glm::vec3(1,1,1));
 
@@ -44,6 +73,7 @@ void drawGeometry(const Model& model, int materialID, glm::mat4 transform, glm::
     //printf("Material ID: %d (passed in id = %d)\n", model.materialID,materialID);
     //printf("xyx %f %f %f %f\n",model.transform[0][0],model.transform[0][1],model.transform[0][2],model.transform[0][3]);
     //if (model.materialID >= 0) material = materials[model.materialID];
+
 
     Material material;
     if (materialID < 0){
@@ -449,10 +479,17 @@ int drawSceneGeometry(const vector<Model*>& toDraw, const glm::mat4& view, const
 		// Camera Frustum
 		debugShader.bind();
 		glBindVertexArray(unitCubeVAO);
-		GLint VP = glGetUniformLocation(debugShader.ID,"VP");
+		debugTransform = glGetUniformLocation(debugShader.ID, "transform");	// TODO: should set these up in a init function
+		debugColor = glGetUniformLocation(debugShader.ID, "color");			// ''
 		auto viewProj = proj * view * otherCamModel * glm::inverse(proj);
-		glUniformMatrix4fv(VP, 1, GL_FALSE, glm::value_ptr(viewProj));
+		glm::vec4 color(1, 1, 0, 1);
+		glUniformMatrix4fv(debugTransform, 1, GL_FALSE, glm::value_ptr(viewProj));
+		glUniform4fv(debugColor, 1, glm::value_ptr(color));
 		glDrawArrays(GL_LINES,0,24);
+
+		for (size_t i = 0; i < toDraw.size(); i++) {
+			drawDebugGeometry(*toDraw[i], proj, view);
+		}
 	}
 
     g_frustum.UpdatePlanesExtract( proj * otherCamView );
@@ -476,7 +513,7 @@ int drawSceneGeometry(const vector<Model*>& toDraw, const glm::mat4& view, const
     //std::cout << "To draw: " << toDraw.size() << std::endl;
     //std::cout << "Survived culling: " << culledModels.size() << std::endl;
     //g_frustum.Print();
-    setPBRShaderUniforms( view, proj,lightViewMatrix, lightProjectionMatrix, useShadowMap );
+    setPBRShaderUniforms( view, proj, lightViewMatrix, lightProjectionMatrix, useShadowMap );
     updatePRBShaderSkybox(); //TODO: We only need to do this if the skybox changes
 
     glBindVertexArray(modelsVAO);
