@@ -47,6 +47,7 @@ struct Model{
     glm::vec3 modelColor = glm::vec3(1,1,1);
     std::vector<Model*> childModel;
     std::vector< LODInfo > lods;
+	bool isDynamic = false;
 };
 
 void resetModels();

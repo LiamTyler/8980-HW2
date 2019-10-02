@@ -12,6 +12,7 @@ void luaSetup(lua_State * L){
 	//register new custom method
 	lua_register(L, "placeModel", placeModel);
 	lua_register(L, "addModel", addModel);
+	lua_register(L, "addModelDynamic", addModelDynamic);
 	lua_register(L, "findModel", findModel);
 	lua_register(L, "hideModel", hideModel);
 	lua_register(L, "unhideModel", unhideModel);
@@ -182,6 +183,55 @@ int addModel(lua_State * L){
 
 	return 1;
 }
+
+int addModelDynamic(lua_State* L) {
+	static int luaModelCount = 0;
+
+	const char* rawModelName;
+	float tx, ty, tz;
+	int argc = lua_gettop(L);
+	rawModelName = lua_tostring(L, 1);
+	tx = lua_tonumber(L, 2);
+	ty = lua_tonumber(L, 3);
+	tz = lua_tonumber(L, 4);
+	LOG_F(1, "Adding model %s at (%f, %f, %f)", rawModelName, tx, ty, tz);
+
+	string childModelName(rawModelName);
+
+	int myModelID;
+	Model* pooledModel = 0;
+	for (auto it = modelPool.begin(); it < modelPool.end(); it++) { //TODO: This is slow, maybe we should hash the row model name to an address somehow?
+		if ((*it)->numChildren == 1 && (*it)->childModel[0]->name == childModelName) {
+			pooledModel = *it;
+			myModelID = (*it)->ID;
+			swap(*it, modelPool.back());
+			modelPool.pop_back();
+			//printf("Found model id %d (%d available) with only child named: %s",myModelID,modelPool.size(),childModelName.c_str());
+			//TODO: We should ideally reset his material, etc... (not just transformation)
+			models[myModelID].transform = glm::translate(glm::mat4(), glm::vec3(tx, ty, tz));
+			break;
+		}
+	}
+
+	if (!pooledModel) {
+		//printf("No pooled %s resource found (%d available), adding model",childModelName.c_str(),modelPool.size());
+		string modelName = childModelName + std::to_string(luaModelCount);
+		luaModelCount++;
+		myModelID = addModel(modelName);
+		addChild(childModelName, myModelID);
+		models[myModelID].transform = glm::translate(models[myModelID].transform, glm::vec3(tx, ty, tz));
+	}
+
+
+	models[myModelID].isDynamic = true;
+	curScene.toDraw.push_back(&models[myModelID]);
+
+	lua_pushnumber(L, myModelID);
+
+	return 1;
+}
+
+
 
 #include "CollisionSystem.h"
 

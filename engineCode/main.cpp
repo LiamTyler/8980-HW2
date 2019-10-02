@@ -148,6 +148,11 @@ int main(int argc,char *argv[]){
 
     int timeSpeed = 1;   //Modifies timestep rate given to Lua
 
+	for (int i = 0; i < curScene.toDraw.size(); ++i)
+	{
+		printf("Model %s %s dynamic\n", curScene.toDraw.at(i)->name.c_str(), (curScene.toDraw.at(i)->isDynamic ? "is" : "is not"));
+	}
+
     //Event Loop (Loop while alive, processing each event as fast as possible)
     SDL_Event windowEvent;
     bool quit = false;

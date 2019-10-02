@@ -44,7 +44,7 @@ function keyHandler(keys)
     CameraDirZ = -math.sin( theta )
 end
 
-id = addModel("Chalet",0,0.5,2)
+id = addModelDynamic("Chalet",0,0.5,2)
 --setModelMaterial(id,"Shiny Red Plastic")
 --setModelMaterial(id,"Steel")
 --animatedModels[id] = true
