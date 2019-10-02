@@ -15,6 +15,14 @@ struct AABB
 
 struct LODInfo
 {
+    LODInfo() : startIndex( 0 ), numIndices( 0 ) {}
+    LODInfo( size_t start, uint32_t num, const std::vector< uint32_t>& ind ) :
+        startIndex( start ),
+        numIndices( num ),
+        indices( ind )
+    {
+    }
+
     size_t   startIndex = 0;
     uint32_t numIndices = 0;
     std::vector< uint32_t > indices;

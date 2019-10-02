@@ -14,6 +14,7 @@ std::string err;
 #include <fstream>
 #include "serialize.hpp"
 #include "model.hpp"
+#include "material.hpp"
 #include "MemoryMapped.h"
 
 using std::string;
@@ -37,7 +38,10 @@ void loadAllModelsTo1VBO(GLuint vbo, GLuint ibo )
     for(int i = 0; i < numModels; i++) {
         models[i].startVertex = vextexCount;
         vextexCount += models[i].numVerts;
-        indexCount += models[i].indices.size();
+        for ( size_t lod = 0; lod < models[i].lods.size(); ++lod )
+        {
+            indexCount += models[i].lods[lod].numIndices;
+        }
     }
     int totalVertexCount = vextexCount;
 
@@ -45,15 +49,23 @@ void loadAllModelsTo1VBO(GLuint vbo, GLuint ibo )
     indices.reserve( indexCount );
     uint32_t currIndexOffset = 0;
     float* allModelData = new float[vextexCount*8];
-    copy(models[0].modelData,models[0].modelData + models[0].numVerts*8,allModelData);
-    for(int i = 0; i < numModels; i++){
+    copy( models[0].modelData, models[0].modelData + models[0].numVerts*8, allModelData );
+    for( int i = 0; i < numModels; i++ )
+    {
         copy(models[i].modelData,models[i].modelData + models[i].numVerts*8,allModelData + models[i].startVertex*8);
-        models[i].startIndex = currIndexOffset;
-        for ( size_t index = 0; index < models[i].indices.size(); ++index )
+
+        std::cout << models[i].lods.size() << " " << models[i].numVerts << std::endl;
+        for ( size_t lod = 0; lod < models[i].lods.size(); ++lod )
         {
-            indices.push_back( currIndexOffset + models[i].indices[index] );
+            models[i].lods[lod].startIndex = indices.size();
+            std::cout << "\t" << models[i].lods[lod].startIndex << " " << models[i].lods[lod].numIndices << std::endl;
+            for ( size_t index = 0; index < models[i].lods[lod].numIndices; ++index )
+            {
+                indices.push_back( currIndexOffset + models[i].lods[lod].indices[index] );
+            }
+            // currIndexOffset += (uint32_t) models[i].lods[lod].numIndices;
         }
-        currIndexOffset += (uint32_t) models[i].indices.size();
+        currIndexOffset += models[i].numVerts;
     }
     glBufferData(GL_ARRAY_BUFFER,totalVertexCount*8*sizeof(float), allModelData,GL_STATIC_DRAW);
     delete allModelData;
@@ -185,7 +197,8 @@ void loadModel(string fileName){
             LOG_F(1,"Loaded %d lines",numLines);
             models[curModelID].numVerts = numLines/8;
             AABB aabb = { glm::vec3( FLT_MAX ), glm::vec3( FLT_MIN ) };
-            models[curModelID].indices.resize( numLines/8 );
+            models[curModelID].lods.resize( 1 );
+            models[curModelID].lods[0].indices.resize( numLines/8 );
             for(int i = 0; i < models[curModelID].numVerts; ++i)
             {
                 float vx = models[curModelID].modelData[8*i + 0];
@@ -193,22 +206,25 @@ void loadModel(string fileName){
                 float vz = models[curModelID].modelData[8*i + 2];
                 aabb.min = glm::min(aabb.min,glm::vec3(vx,vy,vz));
                 aabb.max = glm::max(aabb.max,glm::vec3(vx,vy,vz));
-                models[curModelID].indices[i] = i;
+                models[curModelID].lods[0].indices[i] = i;
             }
-            models[curModelID].numIndices = models[curModelID].indices.size();
+            // models[curModelID].numIndices = models[curModelID].lods[0].indices.size();
             models[curModelID].aabb = aabb;
+            models[curModelID].lods[0].startIndex = 0;
+            models[curModelID].lods[0].numIndices = models[curModelID].lods[0].indices.size();
 
             modelFile.close();
         }
         else if ( commandStr == "ffiModel" )
         {
-            char fname[1024];
-            sscanf( rawline,"ffiModel = %s", fname );
+            char rawname[1024];
+            sscanf( rawline, "ffiModel = %s", rawname );
+            std::string fname = modelDir + rawname;
 
             MemoryMapped memMappedFile;
             if ( !memMappedFile.open( fname, MemoryMapped::WholeFile, MemoryMapped::SequentialScan ) )
             {
-                LOG_F( 1, "Could not open fastfile: '%s'", fname );
+                LOG_F( INFO, "Could not open fastfile: '%s'", fname.c_str() );
                 return;
             }
 
@@ -216,6 +232,106 @@ void loadModel(string fileName){
             PG::Model model;
             model.Deserialize( buffer );
             memMappedFile.close();
+
+
+            LOG_F( INFO,"num materials: %d", (int) model.materials.size() );
+            for( size_t i = 0; i < model.materials.size(); i++ ){
+                auto pgMat = model.materials[i];
+                Material m;
+                m.name      = pgMat->name;
+                m.col       = pgMat->Kd;
+                m.emissive  = pgMat->Ke;
+                m.ior       = 1.5;
+                m.roughness = 1/(1+0.01*pgMat->Ns );
+                m.metallic  = 0;
+                //m.metallic = objMaterials[i].metallic;
+                float avgSpec = ( pgMat->Ks.x + pgMat->Ks.y + pgMat->Ks.z ) / 3.0;
+                if(avgSpec > 0.8) m.reflectiveness = (avgSpec-0.8)/0.2;
+                // std::cout << "Model: " << fname << std::endl;
+                // std::cout << "Matname: " << m.name << std::endl;
+                // std::cout << "IOR: " << m.ior << std::endl;
+                // std::cout << "Roughness: " << m.roughness << std::endl;
+                // std::cout << "Metallic: " << m.metallic << std::endl;
+                // std::cout << "reflectiveness: " << m.reflectiveness << std::endl;
+                // std::cout << "color: " << m.col.x << " " << m.col.y << " " << m.col.z << std::endl;
+                // std::cout << "emissive: " << m.emissive.x << " " << m.emissive.y << " " << m.emissive.z << std::endl;
+                // std::cout << std::endl;
+
+                if( pgMat->map_Kd != "" )
+                {
+                    string textureName = modelDir + pgMat->map_Kd;
+                    int foundTexture = -1;
+                    for(int i = 0; i < numTextures; i++){
+                        if(textures[i] == textureName){
+                            foundTexture = i;
+                            break;
+                        }
+                    }
+                    if(foundTexture >= 0){
+                        LOG_F(1,"Reusing existing texture: %s",textures[foundTexture].c_str());
+                        m.textureID = foundTexture;
+                    } else{
+                        textures[numTextures] = textureName;
+                        m.textureID = numTextures;
+                        numTextures++;
+                        LOG_F(1,"New texture named: %s",textureName.c_str());
+                    }
+                }
+
+                materials[numMaterials] = m;
+                LOG_F( INFO, "Creating Material ID %d with name '%s'",numMaterials,materials[numMaterials].name.c_str());
+                numMaterials++;
+            }
+
+            int objChild = 0;
+            string childName = fname + string("-Child-") + std::to_string( objChild );
+            int childModelID = addModel(childName); //add Childs
+
+            {
+                string materialName = model.materials[0]->name;
+                int materialID = -1;
+                if(models[curModelID].materialID == -1) //Only use obj materials if the parent doesn't have it's own material
+                    materialID = findMaterial(materialName.c_str());
+                LOG_F(1,"Binding material: '%s' (Material ID %d) to Model %d",materialName.c_str(),materialID,childModelID);
+                models[childModelID].materialID = materialID;
+            }
+
+            for ( size_t i = 0; i < model.meshes.size(); i++ )
+            {
+                const auto& mesh = model.meshes[i];
+
+                models[childModelID].aabb = { mesh.aabb.min, mesh.aabb.max };
+                //models[childModelID].indices = mesh.indices;
+                //models[childModelID].numIndices = mesh.indices.size();
+                models[childModelID].modelData = new float[mesh.numVertices * 8];
+                memcpy( models[childModelID].modelData, mesh.vertices.data(), mesh.numVertices * sizeof( PG::Vertex ) );
+                models[childModelID].numVerts = mesh.numVertices;
+                LOG_F(1,"Loaded %d vertices",models[childModelID].numVerts);
+                models[childModelID].lods.resize( mesh.lods.size() );
+                for ( size_t lod = 0; lod < mesh.lods.size(); ++ lod )
+                {
+                    models[childModelID].lods[lod].indices    = mesh.lods[lod].indices;
+                    models[childModelID].lods[lod].startIndex = mesh.lods[lod].startIndex;
+                    models[childModelID].lods[lod].numIndices = mesh.lods[lod].numIndices;
+                }
+                
+                addChild(childName,curModelID);
+
+                // Start a new model for the next set of textures
+                objChild++;
+                childName = fname + string("-Child-") + std::to_string( objChild );
+                LOG_F( INFO,"Loading obj child model %s as IDs: %d",(childName).c_str(),childModelID);
+                childModelID = addModel(childName);
+
+                //Bind the new material
+                string materialName = model.materials[i]->name;
+                int materialID = -1;
+                if(models[curModelID].materialID == -1) //Only use obj materials if the parent doesn't have it's own material
+                    materialID = findMaterial(materialName.c_str());
+                LOG_F( INFO, "Binding material: '%s' (Material ID %d) to Model %d",materialName.c_str(),materialID,curModelID);
+                models[childModelID].materialID = materialID;
+
+            }
         }
         else if (commandStr == "objModel")
         {
@@ -242,6 +358,16 @@ void loadModel(string fileName){
                 float avgSpec = (objMaterials[i].specular[0]+objMaterials[i].specular[1]+objMaterials[i].specular[2])/3.0;
                 if(avgSpec > 0.8) m.reflectiveness = (avgSpec-0.8)/0.2;
                 memcpy((void*)& m.emissive,(void*)& objMaterials[i].emission[0],sizeof(float)*3); //copy all 3 emissive colors (RGB)
+
+                // std::cout << "Model: " << objFile << std::endl;
+                // std::cout << "Matname: " << m.name << std::endl;
+                // std::cout << "IOR: " << m.ior << std::endl;
+                // std::cout << "Roughness: " << m.roughness << std::endl;
+                // std::cout << "Metallic: " << m.metallic << std::endl;
+                // std::cout << "reflectiveness: " << m.reflectiveness << std::endl;
+                // std::cout << "color: " << m.col.x << " " << m.col.y << " " << m.col.z << std::endl;
+                // std::cout << "emissive: " << m.emissive.x << " " << m.emissive.y << " " << m.emissive.z << std::endl;
+                // std::cout << std::endl;
 
                 if(objMaterials[i].diffuse_texname != ""){
                     string textureName = modelDir + objMaterials[i].diffuse_texname;
@@ -273,9 +399,9 @@ void loadModel(string fileName){
             int childModelID = addModel(childName); //add Childs
             LOG_F(1,"Loading obj child model %s as IDs: %d",(childName).c_str(),childModelID);
 
-            std::vector<float> vertexData;
+            std::vector< float > vertexData;
             std::vector< uint32_t > indices;
-            AABB currentAABB ={glm::vec3(FLT_MAX),glm::vec3(FLT_MIN)};
+            AABB currentAABB = { glm::vec3( FLT_MAX ), glm::vec3( FLT_MIN ) };
             // Loop over shapes
             for(size_t s = 0; s < objShapes.size(); s++) {
                 int curMaterialID = -1;
@@ -306,8 +432,10 @@ void loadModel(string fileName){
                         //Copy vertex data read so far into the model
                         int numAttribs = vertexData.size();
                         models[childModelID].aabb = currentAABB;
-                        models[childModelID].indices = indices;
-                        models[childModelID].numIndices = indices.size();
+                        models[childModelID].lods.resize( 1 );
+                        models[childModelID].lods[0].indices    = indices;
+                        models[childModelID].lods[0].numIndices = indices.size();
+                        models[childModelID].lods[0].startIndex = 0;
                         models[childModelID].modelData = new float[numAttribs];
                         std::copy(vertexData.begin(),vertexData.end(),models[childModelID].modelData);
                         models[childModelID].numVerts = numAttribs/8;
@@ -370,8 +498,12 @@ void loadModel(string fileName){
             //Copy vertex data read so far into the model
             int numAttribs = vertexData.size();
             models[childModelID].modelData = new float[numAttribs];
-            models[childModelID].indices = indices;
-            models[childModelID].numIndices = indices.size();
+            //models[childModelID].indices = indices;
+            //models[childModelID].numIndices = indices.size();
+            models[childModelID].lods.resize( 1 );
+            models[childModelID].lods[0].indices    = indices;
+            models[childModelID].lods[0].numIndices = indices.size();
+            models[childModelID].lods[0].startIndex = 0;
             models[childModelID].aabb = currentAABB;
             std::copy(vertexData.begin(),vertexData.end(),models[childModelID].modelData);
             models[childModelID].numVerts = numAttribs/8;

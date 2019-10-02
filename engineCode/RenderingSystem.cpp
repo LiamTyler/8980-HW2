@@ -13,6 +13,7 @@
 
 Frustum g_frustum;
 int g_numDrawn = 0;
+int g_currentLOD = 2;
 
 using std::vector;
 
@@ -102,7 +103,10 @@ void drawGeometry(const Model& model, int materialID, glm::mat4 transform, glm::
     //printf("start/end %d %d\n",model.startVertex, model.numVerts);
     totalTriangles += model.numVerts/3; //3 verts to a triangle
     // glDrawArrays(GL_TRIANGLES, model.startVertex, model.numVerts); //(Primitive Type, Start Vertex, End Vertex) //Draw only 1st object
-	glDrawElements(GL_TRIANGLES, model.numIndices, GL_UNSIGNED_INT, (void*)(model.startIndex * sizeof( uint32_t ) ) );
+	// glDrawElements(GL_TRIANGLES, model.numIndices, GL_UNSIGNED_INT, (void*)(model.startIndex * sizeof( uint32_t ) ) );
+    int lod = std::min( (int)model.lods.size() - 1, std::max( 0, g_currentLOD ) );
+    glDrawElements( GL_TRIANGLES, model.lods[lod].numIndices, GL_UNSIGNED_INT,
+                    (void*)(model.lods[lod].startIndex * sizeof( uint32_t ) ) );
 }
 
 void drawColliderGeometry(){ //, Material material //TODO: Take in a material for the colliders
@@ -520,7 +524,7 @@ void drawCompositeImage(bool useBloom){
     glBindTexture(GL_TEXTURE_2D, baseTex);  //baseTex  depthMap
     glUniform1i(glGetUniformLocation(compositeShader.ID, "texDim"), 1);
 
-    if (useBloom){  
+    if (useBloom){
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, pingpongColorbuffers[!horizontal]); //pass in blured texture
         bloomLevel = 1;

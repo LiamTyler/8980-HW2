@@ -70,7 +70,9 @@ inline void Read( std::ifstream& in, std::vector< T >& vec )
     serialize::Read( in, len );
     vec.resize( len );
     if ( len )
+    {
         in.read( (char*)&vec[0], len * sizeof( T ) );
+    }
 }
 
 inline void Read( std::ifstream& in, char* buff, size_t len )
