@@ -8,6 +8,7 @@
 #include "CollisionSystem.h"
 #include "Shader.h"
 #include "Frustum.h"
+#include <algorithm>
 #include <external/loguru.hpp>
 #include <external/stb_image.h>
 
