@@ -19,7 +19,6 @@ int g_currentLOD = 2;
 using std::vector;
 
 GLuint tex[1000];
-std::vector< Model* > culledModels( 10000 );
 
 bool xxx; //Just an unspecified bool that gets passed to shader for debugging
 
@@ -34,21 +33,67 @@ GLint xxxID;
 GLint debugTransform;
 GLint debugColor;
 
+GLuint fboHDR; //floating point FBO for HDR rendering (two render outputs, base color and bloom)
+GLuint baseTex, brightText; //Textures which are bound to the bloom FBOs
+unsigned int pingpongFBO[2];
+unsigned int pingpongColorbuffers[2];
+Shader PBRShader;
+
+GLint posAttrib, texAttrib, normAttrib;
+GLuint modelsVAO, modelsVBO, modelsIBO;
+
 GLuint colliderVAO; //Build a Vertex Array Object for the collider
 
 GLuint unitCube;
 GLuint unitCubeVAO;
+
+Shader debugShader;
+GLint uniView,uniInvView, uniProj;
 
 // Draws unrotated AABB
 void drawDebugGeometry(const Model& model, const glm::mat4 proj, const glm::mat4 view, glm::mat4 transform = glm::mat4(), glm::vec3 modelColor = glm::vec3(1, 0, 0))
 {
 	transform *= model.transform;
 
-	glm::vec3 extents = (model.aabb.max - model.aabb.min) * .5f;
-	glm::vec3 aabbOffset = (model.aabb.max + model.aabb.min) * .5f;
+    for (int i = 0; i < model.numChildren; i++)
+    {
+		drawDebugGeometry(*model.childModel[i], proj, view, transform, modelColor);
+	}
+    if ( !model.modelData )
+    {
+        return;
+    }
+
+    auto min = model.aabb.min;
+    auto max = model.aabb.max;
+    auto e = max - min;
+    std::vector< glm::vec3 > points =
+    {
+        min,
+        min + glm::vec3( e.x, 0, 0 ),
+        min + glm::vec3( 0, 0, e.z ),
+        min + glm::vec3( e.x, 0, e.z ),
+        min + glm::vec3( 0, e.y, 0 ),
+        min + glm::vec3( e.x, e.y, 0 ),
+        min + glm::vec3( 0, e.y, e.z ),
+        max,
+    };
+
+    glm::vec3 newMin = glm::vec3( FLT_MAX );
+    glm::vec3 newMax = -glm::vec3( FLT_MAX );
+    for ( const auto& p : points )
+    {
+        auto newP = glm::vec3( transform * glm::vec4( p, 1 ) );
+        newMin = glm::min( newMin, newP );
+        newMax = glm::max( newMax, newP );
+    }
+
+    glm::vec3 extents    = ( newMax - newMin ) * .5f;
+	glm::vec3 aabbOffset = ( newMax + newMin ) * .5f;
 
 	//GLint TF = glGetUniformLocation(debugShader.ID, "transform");
-	auto boxTransform = proj * view * glm::translate(glm::mat4(), glm::vec3(transform[3]) + aabbOffset) * glm::scale(glm::mat4(),extents);
+	auto boxTransform = proj * view * glm::translate(glm::mat4(), aabbOffset) * glm::scale(glm::mat4(),extents);
+	// auto boxTransform = proj * view * glm::translate(glm::mat4(), glm::vec3(transform[3]) + aabbOffset) * glm::scale(glm::mat4(),extents);
 	glUniformMatrix4fv(debugTransform, 1, GL_FALSE, glm::value_ptr(boxTransform));
 	glUniform4fv(debugColor, 1, glm::value_ptr(glm::vec4(modelColor,1)));
 	//glLineWidth(5);
@@ -59,12 +104,39 @@ void drawDebugGeometry(const Model& model, const glm::mat4 proj, const glm::mat4
 	{
 		return;
 	}*/
-
-	for (int i = 0; i < model.numChildren; i++) {
-		drawDebugGeometry(*model.childModel[i], proj, view, transform, modelColor);
-	}
 }
 
+void drawAABBs( const std::vector<Model*>& dynamicModels, const std::vector< GameObject >& staticGameObjects, const glm::mat4& view, const glm::mat4& proj, const glm::mat4& otherCamView, glm::mat4& otherCamModel )
+{
+	// Camera Frustum
+	debugShader.bind();
+	glBindVertexArray(unitCubeVAO);
+	debugTransform = glGetUniformLocation(debugShader.ID, "transform");	// TODO: should set these up in a init function
+	debugColor = glGetUniformLocation(debugShader.ID, "color");			// ''
+	auto viewProj = proj * view * otherCamModel * glm::inverse(proj);
+	glm::vec4 color(1, 1, 0, 1);
+	glUniformMatrix4fv(debugTransform, 1, GL_FALSE, glm::value_ptr(viewProj));
+	glUniform4fv(debugColor, 1, glm::value_ptr(color));
+	glDrawArrays(GL_LINES,0,24);
+
+	for (size_t i = 0; i < dynamicModels.size(); i++) {
+		drawDebugGeometry(*dynamicModels[i], proj, view);
+	}
+
+    for ( const auto& obj : staticGameObjects )
+    {
+        glm::vec3 extents    = ( obj.aabb.max - obj.aabb.min ) * .5f;
+        glm::vec3 aabbOffset = ( obj.aabb.max + obj.aabb.min ) * .5f;
+
+        //GLint TF = glGetUniformLocation(debugShader.ID, "transform");
+        auto boxTransform = proj * view * glm::translate(glm::mat4(), aabbOffset) * glm::scale(glm::mat4(),extents);
+        // auto boxTransform = proj * view * glm::translate(glm::mat4(), glm::vec3(transform[3]) + aabbOffset) * glm::scale(glm::mat4(),extents);
+        glUniformMatrix4fv(debugTransform, 1, GL_FALSE, glm::value_ptr(boxTransform));
+        glUniform4fv(debugColor, 1, glm::value_ptr(glm::vec4( 1, 0, 0, 1)));
+        //glLineWidth(5);
+        glDrawArrays(GL_LINES, 0, 24);
+    }
+}
 
 void drawGeometry(const Model& model, int matID, glm::mat4 transform = glm::mat4(), glm::vec2 textureWrap=glm::vec2(1,1), glm::vec3 modelColor=glm::vec3(1,1,1));
 
@@ -140,6 +212,96 @@ void drawGeometry(const Model& model, int materialID, glm::mat4 transform, glm::
                     (void*)(model.lods[lod].startIndex * sizeof( uint32_t ) ) );
 }
 
+int drawStaticSceneGeometry( const std::vector< GameObject >& staticGameObjects, const glm::mat4& view, const glm::mat4& proj, const glm::mat4& otherCamView, glm::mat4& otherCamModel,
+                             const glm::mat4& lightViewMatrix, const glm::mat4& lightProjectionMatrix, bool useShadowMap )
+{
+
+    g_frustum.UpdatePlanesExtract( proj * otherCamView );
+    setPBRShaderUniforms( view, proj, lightViewMatrix, lightProjectionMatrix, useShadowMap );
+    updatePRBShaderSkybox(); //TODO: We only need to do this if the skybox changes
+
+    glBindVertexArray(modelsVAO);
+
+    glm::vec3 modelColor = glm::vec3( 1 );
+    glm::vec2 textureWrap = glm::vec2( 1 );
+    
+    //std::cout << "\nDrawing\n" << std::endl;
+    //glm::mat4 I;
+    totalTriangles = 0;
+    g_numDrawn = 0;
+    /*for (size_t i = 0; i < culledModels.size(); ++i )
+    {
+        drawGeometry( *culledModels[i], -1, I );
+    }*/
+     for (const auto& obj : staticGameObjects){
+        //drawGeometry(*toDraw[i], -1);
+
+        //printf("Model: %s, num Children %d\n",model.name.c_str(), model.numChildren);
+        //printf("Material ID: %d (passed in id = %d)\n", model.materialID,materialID);
+        //printf("xyx %f %f %f %f\n",model.transform[0][0],model.transform[0][1],model.transform[0][2],model.transform[0][3]);
+        //if (model.materialID >= 0) material = materials[model.materialID];
+
+        Material material;
+        if (obj.materialID >= 0){
+            material = materials[obj.materialID]; // Maybe should be a pointer
+        }
+        //printf("Using material %d - %s\n", model.materialID,material.name.c_str());
+
+        //obj.transform *= model.transform;
+        // modelColor *= model.modelColor;
+        //textureWrap *= model.textureWrap; //TODO: Where best to apply textureWrap transform?
+
+
+        if ( !g_frustum.AABBIntersect( obj.aabb.min, obj.aabb.max ) )
+        {
+            continue;
+        }
+        ++g_numDrawn;
+
+        // transform *= model.modelOffset;
+        // !!!!!! textureWrap *= model.textureWrap; //TODO: Should textureWrap stack like this? ANSWER: NO
+
+        //std::cout << "Model: " << model.name << ", id = " << model.ID << std::endl;
+        //std::cout << transform << std::endl;
+        //assert( transform == model.finalTransform );
+        //std::cout << model.finalTransform << std::endl;
+        glUniformMatrix4fv(uniModelMatrix, 1, GL_FALSE, glm::value_ptr( obj.transform ));
+        //glUniformMatrix4fv(uniModelMatrix, 1, GL_FALSE, glm::value_ptr(model.finalTransform));
+
+        glUniform1i(uniUseTextureID, material.textureID >= 0); //textureID of -1 --> no texture
+
+        if (material.textureID >= 0){
+            glActiveTexture(GL_TEXTURE0);  //Set texture 0 as active texture
+            glBindTexture(GL_TEXTURE_2D, tex[material.textureID]); //Load bound texture
+            glUniform1i(colorTextureID, 0); //Use the texture we just loaded (texture 0) as material color
+            glUniform2fv(texScaleID, 1, glm::value_ptr(textureWrap));
+        }
+
+        glUniform1i(xxxID, xxx);
+
+        glUniform3fv(modelColorID, 1, glm::value_ptr( modelColor )); //multiply parent's color by your own
+        // !!!!! glUniform3fv(modelColorID, 1, glm::value_ptr(modelColor*model.modelColor)); //multiply parent's color by your own
+
+        glUniform1f(metallicID, material.metallic); 
+        glUniform1f(roughnessID, material.roughness); 
+        glUniform1f(iorID, material.ior);
+        glUniform1f(reflectivenessID, material.reflectiveness);
+        glUniform3fv(uniColorID, 1, glm::value_ptr(material.col));
+        glUniform3fv(uniEmissiveID, 1, glm::value_ptr(material.emissive));
+
+        //printf("start/end %d %d\n",model.startVertex, model.numVerts);
+        totalTriangles += obj.model->numVerts/3; //3 verts to a triangle
+        // glDrawArrays(GL_TRIANGLES, model.startVertex, model.numVerts); //(Primitive Type, Start Vertex, End Vertex) //Draw only 1st object
+	    // glDrawElements(GL_TRIANGLES, model.numIndices, GL_UNSIGNED_INT, (void*)(model.startIndex * sizeof( uint32_t ) ) );
+        int lod = std::min( (int)obj.model->lods.size() - 1, std::max( 0, g_currentLOD ) );
+        glDrawElements( GL_TRIANGLES, obj.model->lods[lod].numIndices, GL_UNSIGNED_INT,
+                        (void*)(obj.model->lods[lod].startIndex * sizeof( uint32_t ) ) );
+     }
+
+
+    return g_numDrawn;
+}
+
 void drawColliderGeometry(){ //, Material material //TODO: Take in a material for the colliders
     //printf("Drawing %d Colliders\n",collisionModels.size());
     //printf("Material ID: %d\n", material);
@@ -209,10 +371,6 @@ void loadTexturesToGPU(){
 
 
 //------------ HDR ------------------
-GLuint fboHDR; //floating point FBO for HDR rendering (two render outputs, base color and bloom)
-GLuint baseTex, brightText; //Textures which are bound to the bloom FBOs
-unsigned int pingpongFBO[2];
-unsigned int pingpongColorbuffers[2];
 
 void BindHDRFramebuffer()
 {
@@ -273,12 +431,6 @@ void initHDRBuffers(){
 
 
 //------------ PBR Shader ---------
-Shader PBRShader;
-Shader debugShader;
-
-GLint posAttrib, texAttrib, normAttrib;
-GLint uniView,uniInvView, uniProj;
-GLuint modelsVAO, modelsVBO, modelsIBO;
 
 void initPBRShading(){
     PBRShader = Shader("shaders/vertexTex.glsl", "shaders/fragmentTex.glsl");
@@ -473,26 +625,7 @@ void CalculateFinalModelMatrix( Model& model, glm::mat4 transform = glm::mat4() 
 int drawSceneGeometry(const vector<Model*>& toDraw, const glm::mat4& view, const glm::mat4& proj, const glm::mat4& otherCamView, glm::mat4& otherCamModel,
         const glm::mat4& lightViewMatrix, const glm::mat4& lightProjectionMatrix, bool useShadowMap )
 {
-    
-	if (curScene.currentCam == DEBUG_CAMERA)
-	{
-		// Camera Frustum
-		debugShader.bind();
-		glBindVertexArray(unitCubeVAO);
-		debugTransform = glGetUniformLocation(debugShader.ID, "transform");	// TODO: should set these up in a init function
-		debugColor = glGetUniformLocation(debugShader.ID, "color");			// ''
-		auto viewProj = proj * view * otherCamModel * glm::inverse(proj);
-		glm::vec4 color(1, 1, 0, 1);
-		glUniformMatrix4fv(debugTransform, 1, GL_FALSE, glm::value_ptr(viewProj));
-		glUniform4fv(debugColor, 1, glm::value_ptr(color));
-		glDrawArrays(GL_LINES,0,24);
-
-		for (size_t i = 0; i < toDraw.size(); i++) {
-			drawDebugGeometry(*toDraw[i], proj, view);
-		}
-	}
-
-    g_frustum.UpdatePlanesExtract( proj * otherCamView );
+    //g_frustum.UpdatePlanesExtract( proj * otherCamView );
     /*static int count = 0;
     for (size_t i = 0; i < toDraw.size(); i++ )
     {
@@ -520,8 +653,8 @@ int drawSceneGeometry(const vector<Model*>& toDraw, const glm::mat4& view, const
     
     //std::cout << "\nDrawing\n" << std::endl;
     //glm::mat4 I;
-    totalTriangles = 0;
-    g_numDrawn = 0;
+    //totalTriangles = 0;
+    //g_numDrawn = 0;
     /*for (size_t i = 0; i < culledModels.size(); ++i )
     {
         drawGeometry( *culledModels[i], -1, I );

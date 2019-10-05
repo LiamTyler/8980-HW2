@@ -66,6 +66,52 @@ void configEngine(string configFile,string configName);
 
 unsigned char lastActiveCamera = MAIN_CAMERA;
 
+void CalculateFinalPosition( Model* model, glm::mat4 transform = glm::mat4(1), int materialID = -1, glm::vec2 textureWrap=glm::vec2(1,1), glm::vec3 modelColor=glm::vec3(1,1,1))
+{
+    transform *= model->transform;
+
+    if (materialID < 0){
+        materialID = model->materialID; 
+    }
+
+    for (int i = 0; i < model->numChildren; i++)
+    {
+        CalculateFinalPosition( model->childModel[i], transform, materialID);
+    }
+
+    if ( model->modelData )
+    {
+        GameObject obj;
+        obj.model = model;
+        obj.transform = transform;
+        auto min = model->aabb.min;
+        auto max = model->aabb.max;
+        auto e = max - min;
+        std::vector< glm::vec3 > points =
+        {
+            min,
+            min + glm::vec3( e.x, 0, 0 ),
+            min + glm::vec3( 0, 0, e.z ),
+            min + glm::vec3( e.x, 0, e.z ),
+            min + glm::vec3( 0, e.y, 0 ),
+            min + glm::vec3( e.x, e.y, 0 ),
+            min + glm::vec3( 0, e.y, e.z ),
+            max,
+        };
+
+        obj.aabb.min = glm::vec3( FLT_MAX );
+        obj.aabb.max = -glm::vec3( FLT_MAX );
+        for ( const auto& p : points )
+        {
+            auto newP = glm::vec3( transform * glm::vec4( p, 1 ) );
+            obj.aabb.min = glm::min( obj.aabb.min, newP );
+            obj.aabb.max = glm::max( obj.aabb.max, newP );
+        }
+        obj.materialID = materialID;
+        curScene.staticGameobjects.push_back( obj );
+    }
+}
+
 
 int main(int argc,char *argv[]){
     std::cout << "HELLO!" << std::endl;
@@ -150,8 +196,23 @@ int main(int argc,char *argv[]){
 
 	for (int i = 0; i < curScene.toDraw.size(); ++i)
 	{
-		printf("Model %s %s dynamic\n", curScene.toDraw.at(i)->name.c_str(), (curScene.toDraw.at(i)->isDynamic ? "is" : "is not"));
+	    printf("Model %s %s dynamic\n", curScene.toDraw.at(i)->name.c_str(), (curScene.toDraw.at(i)->isDynamic ? "is" : "is not"));
+        if ( !curScene.toDraw.at(i)->isDynamic )
+        {
+            CalculateFinalPosition( curScene.toDraw[i] );
+        }
+        else
+        {
+            curScene.dynamicModels.push_back( curScene.toDraw[i] );
+        }
 	}
+
+    printf("\n");
+    for ( const auto& obj : curScene.staticGameobjects )
+    {
+        auto p = obj.transform[3];
+        printf( "Model %s is static at position: %f, %f, %f\n", obj.model->name.c_str(), p.x, p.y, p.z );
+    }
 
     //Event Loop (Loop while alive, processing each event as fast as possible)
     SDL_Event windowEvent;
@@ -353,8 +414,15 @@ int main(int argc,char *argv[]){
         glClearColor(0,0,0,1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        int numDrawn = 0;
         // drawSceneGeometry(curScene.toDraw, view,proj); //Pass 2A: Draw Scene Geometry
-        int numDrawn = drawSceneGeometry( curScene.toDraw, view, proj, otherCamView, otherCamModel, lightViewMatrix, lightProjectionMatrix, useShadowMap );
+        // int numDrawn = drawSceneGeometry( curScene.toDraw, view, proj, otherCamView, otherCamModel, lightViewMatrix, lightProjectionMatrix, useShadowMap );
+        if (curScene.currentCam == DEBUG_CAMERA)
+        {
+            drawAABBs( curScene.dynamicModels, curScene.staticGameobjects, view, proj, otherCamView, otherCamModel );
+        }
+        numDrawn += drawStaticSceneGeometry( curScene.staticGameobjects, view, proj, otherCamView, otherCamModel, lightViewMatrix, lightProjectionMatrix, useShadowMap );
+        numDrawn += drawSceneGeometry( curScene.dynamicModels, view, proj, otherCamView, otherCamModel, lightViewMatrix, lightProjectionMatrix, useShadowMap );
 
         //TODO: Add a pass which draws some items without depth culling (e.g. keys, items)
         if(drawColliders) drawColliderGeometry(); //Pass 2B: Draw Colliders

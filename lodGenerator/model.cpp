@@ -95,8 +95,8 @@ bool Model::Deserialize( char*& buffer )
         {
             serialize::Read( buffer, meshes[i].lods[lod].startIndex );
             serialize::Read( buffer, meshes[i].lods[lod].numIndices );
-            std::cout << "Mesh[" << i << "].lod[" << lod << "].startIndex = " << meshes[i].lods[lod].startIndex << std::endl;
-            std::cout << "Mesh[" << i << "].lod[" << lod << "].numIndices = " << meshes[i].lods[lod].numIndices << std::endl;
+            //std::cout << "Mesh[" << i << "].lod[" << lod << "].startIndex = " << meshes[i].lods[lod].startIndex << std::endl;
+            //std::cout << "Mesh[" << i << "].lod[" << lod << "].numIndices = " << meshes[i].lods[lod].numIndices << std::endl;
         }
 
         serialize::Read( buffer, meshes[i].startIndex );

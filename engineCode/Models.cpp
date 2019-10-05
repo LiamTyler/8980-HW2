@@ -54,11 +54,10 @@ void loadAllModelsTo1VBO(GLuint vbo, GLuint ibo )
     {
         copy(models[i].modelData,models[i].modelData + models[i].numVerts*8,allModelData + models[i].startVertex*8);
 
-        std::cout << models[i].lods.size() << " " << models[i].numVerts << std::endl;
+        // std::cout << models[i].lods.size() << " " << models[i].numVerts << std::endl;
         for ( size_t lod = 0; lod < models[i].lods.size(); ++lod )
         {
             models[i].lods[lod].startIndex = indices.size();
-            std::cout << "\t" << models[i].lods[lod].startIndex << " " << models[i].lods[lod].numIndices << std::endl;
             for ( size_t index = 0; index < models[i].lods[lod].numIndices; ++index )
             {
                 indices.push_back( currIndexOffset + models[i].lods[lod].indices[index] );

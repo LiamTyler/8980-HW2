@@ -2,6 +2,7 @@
 #define SCENE_H
 
 #include "glm/glm.hpp"
+#include "Models.h"
 
 #include <vector>
 #include <string>
@@ -35,6 +36,14 @@ struct Model;
 #define DEBUG_CAMERA 0 // TODO: represent cameras better later
 #define MAIN_CAMERA 1
 
+struct GameObject
+{
+    glm::mat4 transform;
+    int materialID;
+    AABB aabb;
+    Model* model;
+};
+
 struct Scene{
 	std::string environmentMap = "";
 	Light shadowLight;
@@ -48,6 +57,8 @@ struct Scene{
 	glm::vec3 ambientLight = glm::vec3(0.3, 0.3, 0.3);
 
 	std::vector<Model*> toDraw;
+    std::vector< GameObject > staticGameobjects;
+    std::vector< Model* > dynamicModels;
 };
 
 void loadScene(std::string fileName);
