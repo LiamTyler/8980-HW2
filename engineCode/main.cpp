@@ -23,6 +23,7 @@ float farPlane = 20;
 #include "luaSupport.h"
 
 #include "RenderingSystem.h"
+#include "Frustum.h"
 #include "Skybox.h"
 #include "Shadows.h"
 #include "CollisionSystem.h"
@@ -112,6 +113,29 @@ void CalculateFinalPosition( Model* model, glm::mat4 transform = glm::mat4(1), i
     }
 }
 
+std::vector< GameObject* > g_visibleStaticGameObjects;
+
+extern Frustum g_frustum;
+
+void Cull( BVH* bvh )
+{
+    if ( !g_frustum.AABBIntersect( bvh->_boundingVolume.min, bvh->_boundingVolume.max ) )
+    {
+        return;
+    }
+
+    if ( !bvh->_left )
+    {
+        for ( const auto& o : bvh->_gameObjects )
+        {
+            g_visibleStaticGameObjects.push_back( o );
+        }
+        return;
+    }
+
+    Cull( bvh->_left );
+    Cull( bvh->_right );
+}
 
 int main(int argc,char *argv[]){
     std::cout << "HELLO!" << std::endl;
@@ -208,11 +232,17 @@ int main(int argc,char *argv[]){
 	}
 
     printf("\n");
-    for ( const auto& obj : curScene.staticGameobjects )
+    for ( size_t i = 0; i < curScene.staticGameobjects.size(); ++i )
     {
-        auto p = obj.transform[3];
-        printf( "Model %s is static at position: %f, %f, %f\n", obj.model->name.c_str(), p.x, p.y, p.z );
+        auto p = curScene.staticGameobjects[i].transform[3];
+        // printf( "Model %s is static at position: %f, %f, %f\n", curScene.staticGameobjects[i].model->name.c_str(), p.x, p.y, p.z );
+        std::cout << "Model '" << curScene.staticGameobjects[i].model->name << "':\t" << curScene.staticGameobjects[i].aabb.min << "\t" << curScene.staticGameobjects[i].aabb.max << std::endl;
+
+        g_visibleStaticGameObjects.push_back( &curScene.staticGameobjects[i] );
     }
+
+    BVH bvh( g_visibleStaticGameObjects );
+
 
     //Event Loop (Loop while alive, processing each event as fast as possible)
     SDL_Event windowEvent;
@@ -414,6 +444,12 @@ int main(int argc,char *argv[]){
         glClearColor(0,0,0,1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        g_frustum.UpdatePlanesExtract( proj * otherCamView );
+
+        g_visibleStaticGameObjects.clear();
+        Cull( &bvh );
+        std::cout << g_visibleStaticGameObjects.size() << std::endl;
+
         int numDrawn = 0;
         // drawSceneGeometry(curScene.toDraw, view,proj); //Pass 2A: Draw Scene Geometry
         // int numDrawn = drawSceneGeometry( curScene.toDraw, view, proj, otherCamView, otherCamModel, lightViewMatrix, lightProjectionMatrix, useShadowMap );
@@ -421,7 +457,8 @@ int main(int argc,char *argv[]){
         {
             drawAABBs( curScene.dynamicModels, curScene.staticGameobjects, view, proj, otherCamView, otherCamModel );
         }
-        numDrawn += drawStaticSceneGeometry( curScene.staticGameobjects, view, proj, otherCamView, otherCamModel, lightViewMatrix, lightProjectionMatrix, useShadowMap );
+        // numDrawn += drawStaticSceneGeometry( curScene.staticGameobjects, view, proj, otherCamView, otherCamModel, lightViewMatrix, lightProjectionMatrix, useShadowMap );
+        numDrawn += drawStaticSceneGeometry( g_visibleStaticGameObjects, view, proj, otherCamView, otherCamModel, lightViewMatrix, lightProjectionMatrix, useShadowMap );
         numDrawn += drawSceneGeometry( curScene.dynamicModels, view, proj, otherCamView, otherCamModel, lightViewMatrix, lightProjectionMatrix, useShadowMap );
 
         //TODO: Add a pass which draws some items without depth culling (e.g. keys, items)

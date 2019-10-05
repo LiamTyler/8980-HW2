@@ -7,6 +7,10 @@
 #include <vector>
 #include <string>
 
+//inline std::ostream& operator<<( std::ostream& out, const glm::vec3& v )
+//{
+//    return out << v.x << " " << v.y << " " << v.z;
+//}
 
 struct Light{
 	glm::vec3 color = glm::vec3(1,1,1);
@@ -42,6 +46,18 @@ struct GameObject
     int materialID;
     AABB aabb;
     Model* model;
+};
+
+class BVH
+{
+public:
+    AABB _boundingVolume;
+    BVH* _left = nullptr;
+    BVH* _right = nullptr;
+    std::vector<GameObject*> _gameObjects;
+
+    BVH(const std::vector<GameObject*>&);
+    void partition(const std::vector<GameObject*>&);
 };
 
 struct Scene{

@@ -1,6 +1,8 @@
 #include "Scene.h"
 
 #include <external/loguru.hpp>
+#include <iostream>
+#include "Frustum.h"
 
 using std::string;
 using glm::vec3;
@@ -168,4 +170,132 @@ void loadScene(string fileName){
 			break; //TODO: There can only be 1 shadow casting light!
 		}
 	}
+}
+
+
+void BVH::partition(const std::vector<GameObject*>& objs)
+{
+    std::cout << "OBJS size: " << objs.size() << std::endl;
+
+    _boundingVolume.max = glm::vec3(-FLT_MAX);
+    _boundingVolume.min = glm::vec3(FLT_MAX);
+    for ( auto o : objs )
+    {
+        _boundingVolume.max = glm::max( _boundingVolume.max, o->aabb.max );
+        _boundingVolume.min = glm::min( _boundingVolume.min, o->aabb.min );
+    }
+
+    if ( objs.size() < 3 )
+    {
+        _gameObjects = objs;
+        return;
+    }
+
+    glm::vec3 fullBVHDiff = _boundingVolume.max - _boundingVolume.min;
+
+    // Calculate Split
+    int bestAxis   = 0;
+    float bestCost = FLT_MAX;
+    float bestSplit = 0;
+    for ( int axis = 0; axis < 3; ++axis )
+    {
+        const int NUM_STEPS = 1000;
+        float start = _boundingVolume.min[axis];
+        float end   = _boundingVolume.max[axis];
+        float step  = ( end - start ) / NUM_STEPS;
+
+        for ( float split = start + step; split < end - step; split += step )
+        {
+            AABB leftAABB  = { glm::vec3( FLT_MAX ), glm::vec3( -FLT_MAX ) };
+            AABB rightAABB = { glm::vec3( FLT_MAX ), glm::vec3( -FLT_MAX ) };
+            int numLeft    = 0;
+            int numRight   = 0;
+
+            for ( auto o : objs )
+            {
+                glm::vec3 center = ( o->aabb.max + o->aabb.min ) * .5f;
+        
+                if ( center[axis] > split )
+                {
+                    ++numRight;
+                    rightAABB.max = glm::max(rightAABB.max, o->aabb.max);
+                    rightAABB.min = glm::min(rightAABB.min, o->aabb.min);
+                }
+                else
+                {
+                    ++numLeft;
+                    leftAABB.max = glm::max(leftAABB.max, o->aabb.max);
+                    leftAABB.min = glm::min(leftAABB.min, o->aabb.min);
+                }
+            }
+
+            if (numRight == 0 || numLeft == 0)
+            {
+                continue;
+            }
+
+            // Calculate the cost
+            glm::vec3 leftDiff = leftAABB.max - leftAABB.min;
+            float LCost = 2 * (leftDiff[0] *    leftDiff[1] +   leftDiff[1] * leftDiff[2] + leftDiff[2] + leftDiff[0]) * numLeft;
+            
+            glm::vec3 rightDiff = rightAABB.max - rightAABB.min;
+            float RCost = 2 * (rightDiff[0] *   rightDiff[1] +  rightDiff[1] * rightDiff[2] + rightDiff[2] + rightDiff[0]) * numRight;
+
+            float cost = LCost + RCost;
+            if ( cost < bestCost)
+            {
+                bestCost = cost;
+                bestSplit = split;
+                bestAxis = axis;
+            }
+            
+        }
+    }
+
+    //glm::vec3 boundingBoxCenter = (_boundingVolume.max + _boundingVolume.min) * .5f;
+
+    // build lists to recurse on
+    std::vector<GameObject*> leftList;
+    std::vector<GameObject*> rightList;
+
+    for (auto o: objs)
+    {
+        glm::vec3 center = (o->aabb.max + o->aabb.min) * .5f;
+        
+        if (center[bestAxis] > bestSplit)
+        {
+            rightList.push_back(o);
+        }
+        else
+        {
+            leftList.push_back(o);
+        }
+    }
+
+    if (!rightList.empty() && !leftList.empty())
+    {
+        std::cout << "BVH num nodes: " << _gameObjects.size() << "\t" << _boundingVolume.min << "\t" << _boundingVolume.max << std::endl;
+        _right = new BVH(rightList);
+        _left = new BVH(leftList);
+    }
+    else
+    {
+        if (!rightList.empty())
+        {
+            _gameObjects = rightList;
+        }
+        else
+        {
+            _gameObjects = leftList;
+        }
+        std::cout << "BVH num nodes: " << _gameObjects.size() << "\t" << _boundingVolume.min << "\t" << _boundingVolume.max << std::endl;
+    }
+
+}
+
+BVH::BVH(const std::vector<GameObject*>& gameObjs)
+{
+    _left = nullptr;
+    _right = nullptr;
+    partition(gameObjs);
 }

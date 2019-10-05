@@ -212,11 +212,9 @@ void drawGeometry(const Model& model, int materialID, glm::mat4 transform, glm::
                     (void*)(model.lods[lod].startIndex * sizeof( uint32_t ) ) );
 }
 
-int drawStaticSceneGeometry( const std::vector< GameObject >& staticGameObjects, const glm::mat4& view, const glm::mat4& proj, const glm::mat4& otherCamView, glm::mat4& otherCamModel,
+int drawStaticSceneGeometry( const std::vector< GameObject* >& staticGameObjects, const glm::mat4& view, const glm::mat4& proj, const glm::mat4& otherCamView, glm::mat4& otherCamModel,
                              const glm::mat4& lightViewMatrix, const glm::mat4& lightProjectionMatrix, bool useShadowMap )
 {
-
-    g_frustum.UpdatePlanesExtract( proj * otherCamView );
     setPBRShaderUniforms( view, proj, lightViewMatrix, lightProjectionMatrix, useShadowMap );
     updatePRBShaderSkybox(); //TODO: We only need to do this if the skybox changes
 
@@ -242,8 +240,8 @@ int drawStaticSceneGeometry( const std::vector< GameObject >& staticGameObjects,
         //if (model.materialID >= 0) material = materials[model.materialID];
 
         Material material;
-        if (obj.materialID >= 0){
-            material = materials[obj.materialID]; // Maybe should be a pointer
+        if (obj->materialID >= 0){
+            material = materials[obj->materialID]; // Maybe should be a pointer
         }
         //printf("Using material %d - %s\n", model.materialID,material.name.c_str());
 
@@ -252,10 +250,10 @@ int drawStaticSceneGeometry( const std::vector< GameObject >& staticGameObjects,
         //textureWrap *= model.textureWrap; //TODO: Where best to apply textureWrap transform?
 
 
-        if ( !g_frustum.AABBIntersect( obj.aabb.min, obj.aabb.max ) )
+        /*if ( !g_frustum.AABBIntersect( obj->aabb.min, obj->aabb.max ) )
         {
             continue;
-        }
+        }*/
         ++g_numDrawn;
 
         // transform *= model.modelOffset;
@@ -265,7 +263,7 @@ int drawStaticSceneGeometry( const std::vector< GameObject >& staticGameObjects,
         //std::cout << transform << std::endl;
         //assert( transform == model.finalTransform );
         //std::cout << model.finalTransform << std::endl;
-        glUniformMatrix4fv(uniModelMatrix, 1, GL_FALSE, glm::value_ptr( obj.transform ));
+        glUniformMatrix4fv(uniModelMatrix, 1, GL_FALSE, glm::value_ptr( obj->transform ));
         //glUniformMatrix4fv(uniModelMatrix, 1, GL_FALSE, glm::value_ptr(model.finalTransform));
 
         glUniform1i(uniUseTextureID, material.textureID >= 0); //textureID of -1 --> no texture
@@ -290,12 +288,12 @@ int drawStaticSceneGeometry( const std::vector< GameObject >& staticGameObjects,
         glUniform3fv(uniEmissiveID, 1, glm::value_ptr(material.emissive));
 
         //printf("start/end %d %d\n",model.startVertex, model.numVerts);
-        totalTriangles += obj.model->numVerts/3; //3 verts to a triangle
+        totalTriangles += obj->model->numVerts/3; //3 verts to a triangle
         // glDrawArrays(GL_TRIANGLES, model.startVertex, model.numVerts); //(Primitive Type, Start Vertex, End Vertex) //Draw only 1st object
 	    // glDrawElements(GL_TRIANGLES, model.numIndices, GL_UNSIGNED_INT, (void*)(model.startIndex * sizeof( uint32_t ) ) );
-        int lod = std::min( (int)obj.model->lods.size() - 1, std::max( 0, g_currentLOD ) );
-        glDrawElements( GL_TRIANGLES, obj.model->lods[lod].numIndices, GL_UNSIGNED_INT,
-                        (void*)(obj.model->lods[lod].startIndex * sizeof( uint32_t ) ) );
+        int lod = std::min( (int)obj->model->lods.size() - 1, std::max( 0, g_currentLOD ) );
+        glDrawElements( GL_TRIANGLES, obj->model->lods[lod].numIndices, GL_UNSIGNED_INT,
+                        (void*)(obj->model->lods[lod].startIndex * sizeof( uint32_t ) ) );
      }
 
 

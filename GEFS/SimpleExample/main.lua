@@ -22,6 +22,18 @@ rotYVelModel = {}
 
 function frameUpdate(dt)
     frameDT = dt
+    
+  for modelID,v in pairs(animatedModels) do
+    local vel = velModel[modelID]
+    if vel then 
+      translateModel(modelID,dt*vel[1],dt*vel[2],dt*vel[3])
+    end
+
+    local rotYvel = rotYVelModel[modelID]
+    if rotYvel then 
+      rotateModel(modelID,rotYvel*dt, 0, 1, 0)
+    end
+  end
 end
 
 theta = 90 * 3.1415925635 / 180
@@ -73,10 +85,10 @@ end
 
 id = addModel("Dino", 0, 0, 10 )
 
-id = addModel("Teapot",-5,0,0)
+id = addModelDynamic("Teapot",-5,0,0)
 setModelMaterial(id,"Gold")
---animatedModels[id] = true
---rotYVelModel[id] = 1
+animatedModels[id] = true
+rotYVelModel[id] = 1
 
 --id = addModel("Chalet",0,0,0)
 --setModelMaterial(id,"Gold")

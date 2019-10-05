@@ -400,6 +400,13 @@ void loadModel(string fileName){
             int childModelID = addModel(childName); //add Childs
             LOG_F(1,"Loading obj child model %s as IDs: %d",(childName).c_str(),childModelID);
 
+
+            if (childName == "Trex.obj-Child-0")
+
+            {
+                printf("debug\n");
+            }
+
             std::vector< float > vertexData;
             std::vector< uint32_t > indices;
             AABB currentAABB = { glm::vec3( FLT_MAX ), glm::vec3( -FLT_MAX ) };
@@ -427,7 +434,7 @@ void loadModel(string fileName){
                     lastMaterialID = curMaterialID;
                     curMaterialID = objShapes[s].mesh.material_ids[f];
 
-                    if(f == 0 || curMaterialID != lastMaterialID){
+                    if( !vertexData.empty() && f == 0 || curMaterialID != lastMaterialID){
                         LOG_F(3,"CurMat: %d, LastMat: %d",curMaterialID,lastMaterialID);
 
                         //Copy vertex data read so far into the model
