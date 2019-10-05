@@ -23,6 +23,8 @@ int drawStaticSceneGeometry( const std::vector< GameObject* >& staticGameObjects
 
 void drawAABBs( const std::vector<Model*>& dynamicModels, const std::vector< GameObject >& staticGameObjects, const glm::mat4& view, const glm::mat4& proj, const glm::mat4& otherCamView, glm::mat4& otherCamModel );
 
+void drawBVH (const BVH& bvh, const glm::mat4& view, const glm::mat4& proj, const glm::mat4& otherCamView, glm::mat4& otherCamModel  );
+
 //HDR render targets
 void initHDRBuffers();
 void BindHDRFramebuffer();

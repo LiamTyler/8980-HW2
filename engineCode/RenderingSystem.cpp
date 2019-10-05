@@ -138,6 +138,38 @@ void drawAABBs( const std::vector<Model*>& dynamicModels, const std::vector< Gam
     }
 }
 
+void drawBVHAux( const BVH & bvh, const glm::mat4& view, const glm::mat4& proj, const glm::mat4& otherCamView, glm::mat4& otherCamModel, float depth)
+{
+    glm::vec3 extents    = ( bvh._boundingVolume.max - bvh._boundingVolume.min ) * .5f;
+    glm::vec3 aabbOffset = ( bvh._boundingVolume.max + bvh._boundingVolume.min ) * .5f;
+
+    //GLint TF = glGetUniformLocation(debugShader.ID, "transform");
+    auto boxTransform = proj * view * glm::translate(glm::mat4(), aabbOffset) * glm::scale(glm::mat4(),extents);
+    // auto boxTransform = proj * view * glm::translate(glm::mat4(), glm::vec3(transform[3]) + aabbOffset) * glm::scale(glm::mat4(),extents);
+    glUniformMatrix4fv(debugTransform, 1, GL_FALSE, glm::value_ptr(boxTransform));
+    glUniform4fv(debugColor, 1, glm::value_ptr(glm::vec4( 0, depth/ 10, 1, 1)));
+    //glLineWidth(5);
+    glDrawArrays(GL_LINES, 0, 24);
+
+    if(bvh._left)
+        drawBVHAux(*bvh._left, view, proj, otherCamView, otherCamModel, depth + 1);
+    if(bvh._right)
+        drawBVHAux(*bvh._right, view, proj, otherCamView, otherCamModel, depth + 1);
+}
+
+void drawBVH( const BVH & bvh, const glm::mat4& view, const glm::mat4& proj, const glm::mat4& otherCamView, glm::mat4& otherCamModel )
+{
+    // Camera Frustum
+	debugShader.bind();
+	glBindVertexArray(unitCubeVAO);
+    debugTransform = glGetUniformLocation(debugShader.ID, "transform");	// TODO: should set these up in a init function
+	debugColor = glGetUniformLocation(debugShader.ID, "color");			// ''
+	glLineWidth( 2 );
+
+    drawBVHAux(bvh, view, proj, otherCamView, otherCamModel, 0 );
+}
+
+
 void drawGeometry(const Model& model, int matID, glm::mat4 transform = glm::mat4(), glm::vec2 textureWrap=glm::vec2(1,1), glm::vec3 modelColor=glm::vec3(1,1,1));
 
 void drawGeometry(const Model& model, int materialID, glm::mat4 transform, glm::vec2 textureWrap, glm::vec3 modelColor){

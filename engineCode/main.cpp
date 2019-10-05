@@ -455,7 +455,8 @@ int main(int argc,char *argv[]){
         // int numDrawn = drawSceneGeometry( curScene.toDraw, view, proj, otherCamView, otherCamModel, lightViewMatrix, lightProjectionMatrix, useShadowMap );
         if (curScene.currentCam == DEBUG_CAMERA)
         {
-            drawAABBs( curScene.dynamicModels, curScene.staticGameobjects, view, proj, otherCamView, otherCamModel );
+            drawBVH( bvh, view, proj, otherCamView, otherCamModel );
+            //drawAABBs( curScene.dynamicModels, curScene.staticGameobjects, view, proj, otherCamView, otherCamModel );
         }
         // numDrawn += drawStaticSceneGeometry( curScene.staticGameobjects, view, proj, otherCamView, otherCamModel, lightViewMatrix, lightProjectionMatrix, useShadowMap );
         numDrawn += drawStaticSceneGeometry( g_visibleStaticGameObjects, view, proj, otherCamView, otherCamModel, lightViewMatrix, lightProjectionMatrix, useShadowMap );
