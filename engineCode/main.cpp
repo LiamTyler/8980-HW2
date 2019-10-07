@@ -706,6 +706,7 @@ void Win2PPM(int width,int height){
 
     // Copy the image into our buffer
     glReadBuffer(GL_BACK);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glReadPixels(0,0,width,height,GL_RGB,GL_UNSIGNED_BYTE,image);
 
     // Write the PPM file

@@ -57,20 +57,21 @@ function keyHandler(keys)
 end
 
 
-id = addModel("Chalet",0,0.5,2)
+--id = addModel("Teapot",0,0.5,2)
 --setModelMaterial(id,"Shiny Red Plastic")
 --setModelMaterial(id,"Steel")
 --animatedModels[id] = true
 --rotYVelModel[id] = 1
 
---numR = 10
---numC = 10
---for r=0,numR do
---    for c=0,numC do
---        scale = 2
---        id = addModel("Teapot", -numR*scale + scale*r, 0, -numC*scale + scale*c )
---    end
---end
+numR = 1000
+numC = 1000
+for r=0,numR do
+    for c=0,numC do
+        scale = 2
+        id = addModel("Teapot", -numR*scale + scale*r, 0, -numC*scale + scale*c )
+        setModelMaterial(id,"Shiny Red Plastic")
+    end
+end
 
 --numR = 5
 --numC = 5

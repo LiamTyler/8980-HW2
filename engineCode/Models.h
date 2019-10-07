@@ -65,15 +65,15 @@ inline int GetPreferredLODLevel( const glm::vec3& camPos, const glm::vec3& camDi
     auto proj = glm::proj( objPos - camPos, camDir );
     float L = glm::length( proj );
 
-    if ( L < 3 )
+    if ( L < 12 )
     {
         return 0;
     }
-    if ( L < 6 )
+    if ( L < 24 )
     {
         return 1;
     }
-    if ( L < 9 )
+    if ( L < 36 )
     {
         return 2;
     }

@@ -23,12 +23,13 @@ child [ChaletModel]
 [TeapotHighPoly]
 #translate 0 .25 0
 #rotate 90 -1 0 0
-flatModel = teapot.txt   
-#ffiModel = teapot.obj.txt   
+#flatModel = teapot.txt   
+scale .2 .2 .2
+ffiModel = teapot.obj.ffi   
 
 [Teapot]
-#child [TeapotHighPoly]
-child [TeapotLowPoly]
+child [TeapotHighPoly]
+#child [TeapotLowPoly]
 
 [Teapot2]
 translate .25 1 0
