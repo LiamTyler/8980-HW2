@@ -86,13 +86,13 @@ int addModel(string modelName){
 void addChild(string childName,int curModelID){
     static std::unordered_map<string, int> childMap;
     int childModel = -1;
-    auto it = childMap.find( childName );
+    /*auto it = childMap.find( childName );
     if ( it != childMap.end() )
     {
         childModel = it->second;
     }
     else
-    {
+    {*/
         for(int i = 0; i < numModels; i++){
             if(models[i].name == childName){
                 childModel = i;
@@ -100,7 +100,7 @@ void addChild(string childName,int curModelID){
             }
         }
         childMap[childName] = childModel;
-    }
+    //}
     CHECK_F(childModel >= 0,"No model of name '%s' found to be added as a child model!",childName.c_str());
 
     LOG_F(1,"Adding child %s",childName.c_str());
@@ -171,8 +171,10 @@ void loadModel(string fileName){
             //compute new glm matrix`
             float angle,rx,ry,rz;
             sscanf(rawline,"rotate %f %f %f %f",&angle,&rx,&ry,&rz);
+            std::cout << "ROTATING: " << std::endl << models[curModelID].transform << std::endl;
             models[curModelID].transform = glm::rotate(models[curModelID].transform,(float)(angle*(M_PI/180.f)),glm::vec3(rx,ry,rz));
-            LOG_F(1,"Rotating by %f around axis %f %f %f",angle,rx,ry,rz);
+            std::cout << "ROTATING: " << std::endl << models[curModelID].transform << std::endl;
+            LOG_F(INFO,"Rotating by %f around axis %f %f %f",angle,rx,ry,rz);
         } else if(commandStr == "translate"){
             //compute new glm matrix
             float tx,ty,tz;

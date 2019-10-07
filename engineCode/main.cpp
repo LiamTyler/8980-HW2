@@ -224,6 +224,7 @@ int main(int argc,char *argv[]){
     std::cout << "Aboyut to start parsing round 2" << std::endl;
 	for (int i = 0; i < curScene.toDraw.size(); ++i)
 	{
+        // curScene.toDraw[i]->transform[]
 	    // printf("Model %s %s dynamic\n", curScene.toDraw.at(i)->name.c_str(), (curScene.toDraw.at(i)->isDynamic ? "is" : "is not"));
         if ( !curScene.toDraw.at(i)->isDynamic )
         {

@@ -1,8 +1,10 @@
 #ifndef MODELS_H
 #define MODELS_H
 
+#define GLM_FORCE_RADIANS
 #include "Materials.h"
 #include "CollisionSystem.h"
+#include "Frustum.h"
 
 #include <vector>
 #include <string>

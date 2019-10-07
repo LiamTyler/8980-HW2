@@ -11,6 +11,7 @@ flatModel = teapotLowPoly.txt
 
 [ChaletModel]
 translate 0 0 0
+rotate 90 0 1 0
 rotate 90 -1 0 0
 ffiModel = chalet.obj.ffi
 #objModel = chalet.obj
