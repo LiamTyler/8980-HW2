@@ -83,7 +83,7 @@ end
 --    end
 --end
 
-id = addModel("Dino", 0, 0, 10 )
+--id = addModel("Dino", 0, 0, 10 )
 
 id = addModelDynamic("Teapot",-5,0,0)
 setModelMaterial(id,"Gold")

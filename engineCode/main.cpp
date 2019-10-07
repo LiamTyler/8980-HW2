@@ -10,6 +10,7 @@
 #include <external/stb_image.h>
 
 #include <external/loguru.hpp>
+#include <algorithm>
 
 bool useBloom = false;
 bool useShadowMap = true;
@@ -66,6 +67,8 @@ AudioManager audioManager = AudioManager();
 void configEngine(string configFile,string configName);
 
 unsigned char lastActiveCamera = MAIN_CAMERA;
+
+int g_depthSlice = 0;
 
 void CalculateFinalPosition( Model* model, glm::mat4 transform = glm::mat4(1), int materialID = -1, glm::vec2 textureWrap=glm::vec2(1,1), glm::vec3 modelColor=glm::vec3(1,1,1))
 {
@@ -243,7 +246,6 @@ int main(int argc,char *argv[]){
 
     BVH bvh( g_visibleStaticGameObjects );
 
-
     //Event Loop (Loop while alive, processing each event as fast as possible)
     SDL_Event windowEvent;
     bool quit = false;
@@ -278,6 +280,20 @@ int main(int argc,char *argv[]){
                     timeSpeed = 0;
                     audioManager.pause();
                     printf("Paused!\n");
+                }
+            }
+
+            if( windowEvent.type == SDL_MOUSEWHEEL)
+            {
+                if( windowEvent.wheel.y > 0 ) // scroll up
+                {
+                    g_depthSlice += 1;
+                     // Put code for handling "scroll up" here!
+                }
+                else if( windowEvent.wheel.y < 0) // scroll down
+                {
+                    g_depthSlice = std::max( -1, g_depthSlice - 1 );
+                     // Put code for handling "scroll down" here!
                 }
             }
 
@@ -455,8 +471,8 @@ int main(int argc,char *argv[]){
         // int numDrawn = drawSceneGeometry( curScene.toDraw, view, proj, otherCamView, otherCamModel, lightViewMatrix, lightProjectionMatrix, useShadowMap );
         if (curScene.currentCam == DEBUG_CAMERA)
         {
-            drawBVH( bvh, view, proj, otherCamView, otherCamModel );
-            //drawAABBs( curScene.dynamicModels, curScene.staticGameobjects, view, proj, otherCamView, otherCamModel );
+            // drawBVH( bvh, view, proj, otherCamView, otherCamModel );
+            drawAABBs( curScene.dynamicModels, curScene.staticGameobjects, view, proj, otherCamView, otherCamModel );
         }
         // numDrawn += drawStaticSceneGeometry( curScene.staticGameobjects, view, proj, otherCamView, otherCamModel, lightViewMatrix, lightProjectionMatrix, useShadowMap );
         numDrawn += drawStaticSceneGeometry( g_visibleStaticGameObjects, view, proj, otherCamView, otherCamModel, lightViewMatrix, lightProjectionMatrix, useShadowMap );

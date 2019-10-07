@@ -138,18 +138,23 @@ void drawAABBs( const std::vector<Model*>& dynamicModels, const std::vector< Gam
     }
 }
 
+extern int g_depthSlice;
+
 void drawBVHAux( const BVH & bvh, const glm::mat4& view, const glm::mat4& proj, const glm::mat4& otherCamView, glm::mat4& otherCamModel, float depth)
 {
     glm::vec3 extents    = ( bvh._boundingVolume.max - bvh._boundingVolume.min ) * .5f;
     glm::vec3 aabbOffset = ( bvh._boundingVolume.max + bvh._boundingVolume.min ) * .5f;
 
-    //GLint TF = glGetUniformLocation(debugShader.ID, "transform");
-    auto boxTransform = proj * view * glm::translate(glm::mat4(), aabbOffset) * glm::scale(glm::mat4(),extents);
-    // auto boxTransform = proj * view * glm::translate(glm::mat4(), glm::vec3(transform[3]) + aabbOffset) * glm::scale(glm::mat4(),extents);
-    glUniformMatrix4fv(debugTransform, 1, GL_FALSE, glm::value_ptr(boxTransform));
-    glUniform4fv(debugColor, 1, glm::value_ptr(glm::vec4( 0, depth/ 10, 1, 1)));
-    //glLineWidth(5);
-    glDrawArrays(GL_LINES, 0, 24);
+    if ( g_depthSlice == depth )
+    {
+        //GLint TF = glGetUniformLocation(debugShader.ID, "transform");
+        auto boxTransform = proj * view * glm::translate(glm::mat4(), aabbOffset) * glm::scale(glm::mat4(),extents);
+        // auto boxTransform = proj * view * glm::translate(glm::mat4(), glm::vec3(transform[3]) + aabbOffset) * glm::scale(glm::mat4(),extents);
+        glUniformMatrix4fv(debugTransform, 1, GL_FALSE, glm::value_ptr(boxTransform));
+        glUniform4fv(debugColor, 1, glm::value_ptr(glm::vec4( 0, depth/ 10, 1, 1)));
+        //glLineWidth(5);
+        glDrawArrays(GL_LINES, 0, 24);
+    }
 
     if(bvh._left)
         drawBVHAux(*bvh._left, view, proj, otherCamView, otherCamModel, depth + 1);
