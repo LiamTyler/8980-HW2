@@ -4,7 +4,7 @@
 #include "Materials.h"
 #include "Models.h"
 
-class GameObject;
+struct GameObject;
 
 //Shadow mapping functions
 void initShadowMapping();

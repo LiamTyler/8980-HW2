@@ -4,6 +4,7 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_sdl.h"
 #include "imgui/imgui_impl_opengl3.h"
+#include "glm/ext.hpp"
 
 //stb_image include
 #define STB_IMAGE_IMPLEMENTATION //put this line in only one .cpp file
@@ -26,7 +27,6 @@ float farPlane = 20;
 #include "RenderingSystem.h"
 #include "Frustum.h"
 #include "Skybox.h"
-#include "Shadows.h"
 #include "CollisionSystem.h"
 #include "Materials.h"
 #include "Models.h"
@@ -35,6 +35,7 @@ float farPlane = 20;
 #include "Bloom.h"
 #include "Sound.h"
 #include "Scene.h"
+#include "Shadows.h"
 #include "keyboard.h"
 #include "controller.h"
 #include "WindowManager.h"
@@ -220,6 +221,7 @@ int main(int argc,char *argv[]){
 
     int timeSpeed = 1;   //Modifies timestep rate given to Lua
 
+    std::cout << "Aboyut to start parsing round 2" << std::endl;
 	for (int i = 0; i < curScene.toDraw.size(); ++i)
 	{
 	    // printf("Model %s %s dynamic\n", curScene.toDraw.at(i)->name.c_str(), (curScene.toDraw.at(i)->isDynamic ? "is" : "is not"));
@@ -231,7 +233,13 @@ int main(int argc,char *argv[]){
         {
             curScene.dynamicModels.push_back( curScene.toDraw[i] );
         }
+
+        if ( i % 50000 == 0 )
+        {
+            std::cout << "Parsed # of objects: " << i << std::endl;
+        }
 	}
+    std::cout << "Done parsing" << std::endl;
 
     // printf("\n");
     for ( size_t i = 0; i < curScene.staticGameobjects.size(); ++i )
@@ -241,9 +249,16 @@ int main(int argc,char *argv[]){
         // std::cout << "Model '" << curScene.staticGameobjects[i].model->name << "':\t" << curScene.staticGameobjects[i].aabb.min << "\t" << curScene.staticGameobjects[i].aabb.max << std::endl;
 
         g_visibleStaticGameObjects.push_back( &curScene.staticGameobjects[i] );
+
+        if ( i % 50000 == 0 )
+        {
+            std::cout << "Parsed round 2 # of objects: " << i << std::endl;
+        }
     }
+    std::cout << "About to build BVH" << std::endl;
 
     BVH bvh( g_visibleStaticGameObjects );
+    std::cout << "Done building BVH" << std::endl;
 
     //Event Loop (Loop while alive, processing each event as fast as possible)
     SDL_Event windowEvent;

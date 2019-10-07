@@ -16,12 +16,13 @@ std::string err;
 #include "model.hpp"
 #include "material.hpp"
 #include "MemoryMapped.h"
+#include <unordered_map>
 
 using std::string;
 using std::ifstream;
 using std::copy;
 
-Model models[100000];
+Model models[4000000];
 int numModels = 0;
 
 void resetModels(){
@@ -83,12 +84,22 @@ int addModel(string modelName){
 }
 
 void addChild(string childName,int curModelID){
+    static std::unordered_map<string, int> childMap;
     int childModel = -1;
-    for(int i = 0; i < numModels; i++){
-        if(models[i].name == childName){
-            childModel = i;
-            continue;
+    auto it = childMap.find( childName );
+    if ( it != childMap.end() )
+    {
+        childModel = it->second;
+    }
+    else
+    {
+        for(int i = 0; i < numModels; i++){
+            if(models[i].name == childName){
+                childModel = i;
+                continue;
+            }
         }
+        childMap[childName] = childModel;
     }
     CHECK_F(childModel >= 0,"No model of name '%s' found to be added as a child model!",childName.c_str());
 

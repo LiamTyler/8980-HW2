@@ -79,7 +79,7 @@ inline int GetPreferredLODLevel( const glm::vec3& camPos, const glm::vec3& camDi
 }
 
 //Global Model List
-extern Model models[100000];
+extern Model models[4000000];
 extern int numModels;
 
 #endif //MODELS_H

@@ -175,6 +175,7 @@ void loadScene(string fileName){
 
 void BVH::partition(const std::vector<GameObject*>& objs)
 {
+    static int s_numPartitioned = 0;
     // std::cout << "OBJS size: " << objs.size() << std::endl;
 
     _boundingVolume.max = glm::vec3(-FLT_MAX);
@@ -185,9 +186,14 @@ void BVH::partition(const std::vector<GameObject*>& objs)
         _boundingVolume.min = glm::min( _boundingVolume.min, o->aabb.min );
     }
 
-    if ( objs.size() < 3 )
+    if ( objs.size() < 6 )
     {
         _gameObjects = objs;
+        s_numPartitioned += objs.size();
+        if ( s_numPartitioned % 50000 < 2 )
+        {
+            std::cout << "num partitioned: " << s_numPartitioned << std::endl;
+        }
         return;
     }
 
