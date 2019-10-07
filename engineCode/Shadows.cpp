@@ -2,7 +2,12 @@
 #include "RenderingCore.h"
 #include "GPU-Includes.h"
 #include "Shader.h" 
+#include "Scene.h" 
+#include "Frustum.h" 
 #include <algorithm>
+
+extern Frustum g_frustum;
+unsigned int g_shadowTris;
 
 GLuint shadowVAO, shadowVBO, shadowIBO, depthPosAttrib;
 Shader depthShader;
@@ -73,19 +78,27 @@ void drawGeometryShadow(int shaderProgram, const Model& model, Material material
 	
 	if (!model.modelData) return;
 
-	transform *= model.modelOffset;
+	// transform *= model.modelOffset;
+    glm::vec3 pos = glm::vec3( transform[3] );
+    if ( !g_frustum.AABBIntersect( model.aabb.min + pos, model.aabb.max + pos ) )
+    {
+        return;
+    }
 	GLint uniModelMatrixShadow = glGetUniformLocation(depthShader.ID, "model");
+
 	glUniformMatrix4fv(uniModelMatrixShadow, 1, GL_FALSE, glm::value_ptr(transform));
 
 	//printf("start/end %d %d\n",model.startVertex, model.numVerts);
 	// glDrawArrays(GL_TRIANGLES, model.startVertex, model.numVerts); //(Primitive Type, Start Vertex, End Vertex) //Draw only 1st object
 	//glDrawElements(GL_TRIANGLES, model.numIndices, GL_UNSIGNED_INT, (void*)(model.startIndex * sizeof( uint32_t ) ) );
-    int lod = std::min( (int)model.lods.size(), std::max( 0, g_currentLOD ) );
+    int lod = 0;
+    // int lod = std::min( (int)model.lods.size() - 1, std::max( 0, g_currentLOD ) );
     glDrawElements( GL_TRIANGLES, model.lods[lod].numIndices, GL_UNSIGNED_INT,
                     (void*)(model.lods[lod].startIndex * sizeof( uint32_t ) ) );
+    g_shadowTris += model.lods[lod].numIndices / 3;
 }
 
-void computeShadowDepthMap(glm::mat4 lightView, glm::mat4 lightProjection, vector<Model*> toDrawShadows){
+void computeShadowDepthMap(glm::mat4 lightView, glm::mat4 lightProjection, const vector<Model*>& toDrawShadows){
 	glBindVertexArray(shadowVAO);
 	depthShader.bind();
 	glUniformMatrix4fv(glGetUniformLocation(depthShader.ID, "view"), 1, GL_FALSE, &lightView[0][0]);
@@ -94,13 +107,33 @@ void computeShadowDepthMap(glm::mat4 lightView, glm::mat4 lightProjection, vecto
 	glViewport(0, 0, shadowMapWidth, shadowMapHeight);
 	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 	glClear(GL_DEPTH_BUFFER_BIT);
-	
+
+    g_shadowTris = 0;
 	//TODO: Let the user enable front-face culling for shadows if all models are closed
 	//glEnable(GL_CULL_FACE); glCullFace(GL_FRONT);
 	glm::mat4 I;
 	for (size_t i = 0; i < toDrawShadows.size(); i++){
 		//TODO: Allow some objects to not cast shadows @HW
 		drawGeometryShadow(depthShader.ID, *toDrawShadows[i], materials[0], I);
+	}
+
+	// glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	// glBindVertexArray(0);
+}
+
+void computeShadowDepthMapStatic(glm::mat4 lightView, glm::mat4 lightProjection, const std::vector<GameObject*>& staticObjs )
+{
+	GLint uniModelMatrixShadow = glGetUniformLocation(depthShader.ID, "model");
+	for (size_t i = 0; i < staticObjs.size(); i++)
+    {
+        const Model& model = *staticObjs[i]->model;
+
+	    glUniformMatrix4fv(uniModelMatrixShadow, 1, GL_FALSE, glm::value_ptr(staticObjs[i]->transform));
+        int lod = 0;
+        // int lod = std::min( (int)model.lods.size() - 1, std::max( 0, g_currentLOD ) );
+        glDrawElements( GL_TRIANGLES, model.lods[lod].numIndices, GL_UNSIGNED_INT,
+                        (void*)(model.lods[lod].startIndex * sizeof( uint32_t ) ) );
+        g_shadowTris += model.lods[lod].numIndices / 3;
 	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);

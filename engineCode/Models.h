@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <string>
+#include "glm/ext.hpp"
 
 struct AABB
 {
@@ -56,6 +57,26 @@ void loadModel(string fileName);
 void loadAllModelsTo1VBO( unsigned int vbo, unsigned int ibo );
 int addModel(string modelName);
 void addChild(string childName, int curModelID);
+
+inline int GetPreferredLODLevel( const glm::vec3& camPos, const glm::vec3& camDir, const glm::vec3& objPos, const glm::vec3 aabbExtent )
+{
+    auto proj = glm::proj( objPos - camPos, camDir );
+    float L = glm::length( proj );
+
+    if ( L < 3 )
+    {
+        return 0;
+    }
+    if ( L < 6 )
+    {
+        return 1;
+    }
+    if ( L < 9 )
+    {
+        return 2;
+    }
+    return 3;
+}
 
 //Global Model List
 extern Model models[100000];

@@ -33,6 +33,9 @@ void Frustum::UpdatePlanesTrig( float fov, float nearPlane, float farPlane, floa
     SetPlane( 3, nbl, nbr, fbr ); // bottom
     SetPlane( 4, ntl, ntr, nbr ); // near
     SetPlane( 5, ftr, ftl, fbl ); // far
+
+    camDir = forward;
+    camPos = pos;
 }
 
 void Frustum::SetPlane( int i, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3 )

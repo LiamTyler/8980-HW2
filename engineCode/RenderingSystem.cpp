@@ -14,7 +14,7 @@
 
 Frustum g_frustum;
 int g_numDrawn = 0;
-int g_currentLOD = 2;
+int g_currentLOD = 0;
 
 using std::vector;
 
@@ -174,7 +174,6 @@ void drawBVH( const BVH & bvh, const glm::mat4& view, const glm::mat4& proj, con
     drawBVHAux(bvh, view, proj, otherCamView, otherCamModel, 0 );
 }
 
-
 void drawGeometry(const Model& model, int matID, glm::mat4 transform = glm::mat4(), glm::vec2 textureWrap=glm::vec2(1,1), glm::vec3 modelColor=glm::vec3(1,1,1));
 
 void drawGeometry(const Model& model, int materialID, glm::mat4 transform, glm::vec2 textureWrap, glm::vec3 modelColor){
@@ -241,10 +240,14 @@ void drawGeometry(const Model& model, int materialID, glm::mat4 transform, glm::
     glUniform3fv(uniEmissiveID, 1, glm::value_ptr(material.emissive));
 
     //printf("start/end %d %d\n",model.startVertex, model.numVerts);
-    totalTriangles += model.numVerts/3; //3 verts to a triangle
     // glDrawArrays(GL_TRIANGLES, model.startVertex, model.numVerts); //(Primitive Type, Start Vertex, End Vertex) //Draw only 1st object
 	// glDrawElements(GL_TRIANGLES, model.numIndices, GL_UNSIGNED_INT, (void*)(model.startIndex * sizeof( uint32_t ) ) );
-    int lod = std::min( (int)model.lods.size() - 1, std::max( 0, g_currentLOD ) );
+    //int lod = std::min( (int)model.lods.size() - 1, std::max( 0, g_currentLOD ) );
+    // int lod = g_currentLOD;
+    int lod = GetPreferredLODLevel( g_frustum.camPos, g_frustum.camDir, pos, glm::vec3( 1 ) );
+    lod     = std::min( (int)model.lods.size() - 1, std::max( 0, (int)model.lods.size() - 1 - lod ) );
+
+    totalTriangles += model.lods[lod].numIndices / 3;
     glDrawElements( GL_TRIANGLES, model.lods[lod].numIndices, GL_UNSIGNED_INT,
                     (void*)(model.lods[lod].startIndex * sizeof( uint32_t ) ) );
 }
@@ -325,12 +328,16 @@ int drawStaticSceneGeometry( const std::vector< GameObject* >& staticGameObjects
         glUniform3fv(uniEmissiveID, 1, glm::value_ptr(material.emissive));
 
         //printf("start/end %d %d\n",model.startVertex, model.numVerts);
-        totalTriangles += obj->model->numVerts/3; //3 verts to a triangle
         // glDrawArrays(GL_TRIANGLES, model.startVertex, model.numVerts); //(Primitive Type, Start Vertex, End Vertex) //Draw only 1st object
 	    // glDrawElements(GL_TRIANGLES, model.numIndices, GL_UNSIGNED_INT, (void*)(model.startIndex * sizeof( uint32_t ) ) );
-        int lod = std::min( (int)obj->model->lods.size() - 1, std::max( 0, g_currentLOD ) );
+        // int lod = obj->model->lods.size() - 1;
+        glm::vec3 pos = glm::vec3( obj->transform[3] );
+        int lod = GetPreferredLODLevel( g_frustum.camPos, g_frustum.camDir, pos, glm::vec3( 1 ) );
+        lod     = std::min( (int)obj->model->lods.size() - 1, std::max( 0, (int)obj->model->lods.size() - 1 - lod ) );
+
         glDrawElements( GL_TRIANGLES, obj->model->lods[lod].numIndices, GL_UNSIGNED_INT,
                         (void*)(obj->model->lods[lod].startIndex * sizeof( uint32_t ) ) );
+        totalTriangles += obj->model->lods[lod].numIndices / 3;
      }
 
 

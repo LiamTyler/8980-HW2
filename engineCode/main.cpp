@@ -141,7 +141,6 @@ void Cull( BVH* bvh )
 }
 
 int main(int argc,char *argv[]){
-    std::cout << "HELLO!" << std::endl;
     loguru::g_stderr_verbosity = 0; // Only show most relevant messages on stderr
     loguru::init(argc,argv); //Detect verbosity level on command line as -v.
 
@@ -223,7 +222,7 @@ int main(int argc,char *argv[]){
 
 	for (int i = 0; i < curScene.toDraw.size(); ++i)
 	{
-	    printf("Model %s %s dynamic\n", curScene.toDraw.at(i)->name.c_str(), (curScene.toDraw.at(i)->isDynamic ? "is" : "is not"));
+	    // printf("Model %s %s dynamic\n", curScene.toDraw.at(i)->name.c_str(), (curScene.toDraw.at(i)->isDynamic ? "is" : "is not"));
         if ( !curScene.toDraw.at(i)->isDynamic )
         {
             CalculateFinalPosition( curScene.toDraw[i] );
@@ -234,12 +233,12 @@ int main(int argc,char *argv[]){
         }
 	}
 
-    printf("\n");
+    // printf("\n");
     for ( size_t i = 0; i < curScene.staticGameobjects.size(); ++i )
     {
         auto p = curScene.staticGameobjects[i].transform[3];
         // printf( "Model %s is static at position: %f, %f, %f\n", curScene.staticGameobjects[i].model->name.c_str(), p.x, p.y, p.z );
-        std::cout << "Model '" << curScene.staticGameobjects[i].model->name << "':\t" << curScene.staticGameobjects[i].aabb.min << "\t" << curScene.staticGameobjects[i].aabb.max << std::endl;
+        // std::cout << "Model '" << curScene.staticGameobjects[i].model->name << "':\t" << curScene.staticGameobjects[i].aabb.min << "\t" << curScene.staticGameobjects[i].aabb.max << std::endl;
 
         g_visibleStaticGameObjects.push_back( &curScene.staticGameobjects[i] );
     }
@@ -249,6 +248,7 @@ int main(int argc,char *argv[]){
     //Event Loop (Loop while alive, processing each event as fast as possible)
     SDL_Event windowEvent;
     bool quit = false;
+    bool drawBBS = false;
     while(!quit){
         //LOG_F(3,"New Frame.");
         while(SDL_PollEvent(&windowEvent)){  //inspect all events in the queue
@@ -263,6 +263,16 @@ int main(int argc,char *argv[]){
 
             if(windowEvent.type == SDL_KEYUP && windowEvent.key.keysym.sym == SDLK_s){ //If "s" is released
                 saveOutput = false;
+            }
+            if(windowEvent.type == SDL_KEYUP && windowEvent.key.keysym.sym == SDLK_b){ //If "s" is released
+                drawBBS = !drawBBS;
+            }
+            extern int g_currentLOD;
+            if(windowEvent.type == SDL_KEYUP && windowEvent.key.keysym.sym == SDLK_j){ //If "s" is released
+                g_currentLOD--;
+            }
+            if(windowEvent.type == SDL_KEYUP && windowEvent.key.keysym.sym == SDLK_k){ //If "s" is released
+                g_currentLOD++;
             }
             if(windowEvent.type == SDL_KEYDOWN && windowEvent.key.keysym.sym == SDLK_s){ //If "s" is released
                 saveOutput = true;
@@ -394,33 +404,8 @@ int main(int argc,char *argv[]){
         // 3. Bluring Bloom
         // 4. Composite and tone map
 
-        //------ PASS 1 - Shadow map ----------------------
-        static mat4 lightProjectionMatrix,lightViewMatrix;
-
-        useShadowMap = false;
-        if(useShadowMap && curScene.shadowLight.castShadow){
-            //TODO: We can re-use the lightViewMatrix and lightProjectionMatrix if the light doesn't move @performance
-            lightProjectionMatrix = glm::ortho(curScene.shadowLight.frustLeft,curScene.shadowLight.frustRight,
-                    curScene.shadowLight.frustTop,curScene.shadowLight.frustBot,
-                    curScene.shadowLight.frustNear,curScene.shadowLight.frustFar);
-
-            static vec3 lightDir,lightPos,lightUp;
-            static float lightDist;
-            lightDir = curScene.shadowLight.direction;  //TODO: Should the directional light always follow the user's lookat point?
-            lightDist = curScene.shadowLight.distance;
-            lightPos = curScene.activeCam->lookatPoint - lightDir*lightDist;
-            lightUp = glm::cross(vec3(lightDir.y,lightDir.x,lightDir.z), curScene.activeCam->lookatPoint-lightPos);
-            lightViewMatrix = glm::lookAt(lightPos, curScene.activeCam->lookatPoint, lightUp);
-
-            computeShadowDepthMap(lightViewMatrix,lightProjectionMatrix,curScene.toDraw);
-        }
-
-        glViewport(0,0,screenWidth,screenHeight); //TODO: Make this more robust when the user switches to fullscreen
 
         //------ PASS 2 - Main (PBR) Shading Pass --------------------
-
-
-
         mat4 view = glm::lookAt( curScene.activeCam->camPos, //Camera Position
 								 curScene.activeCam->lookatPoint, //Point to look at (camPos + camDir)
 								 curScene.activeCam->camUp );     //Camera Up direction
@@ -448,6 +433,40 @@ int main(int argc,char *argv[]){
 		otherCamModel[3][1] = curScene.cameras[MAIN_CAMERA].camPos.y;
 		otherCamModel[3][2] = curScene.cameras[MAIN_CAMERA].camPos.z;
 
+        g_frustum.UpdatePlanesExtract( proj * otherCamView );
+        g_frustum.camPos = curScene.cameras[MAIN_CAMERA].camPos;
+        g_frustum.camDir = curScene.cameras[MAIN_CAMERA].camDir;
+
+        g_visibleStaticGameObjects.clear();
+        Cull( &bvh );
+
+        //------ PASS 1 - Shadow map ----------------------
+        static mat4 lightProjectionMatrix,lightViewMatrix;
+
+        // useShadowMap = false;
+        if(useShadowMap && curScene.shadowLight.castShadow){
+            //TODO: We can re-use the lightViewMatrix and lightProjectionMatrix if the light doesn't move @performance
+            lightProjectionMatrix = glm::ortho(curScene.shadowLight.frustLeft,curScene.shadowLight.frustRight,
+                    curScene.shadowLight.frustTop,curScene.shadowLight.frustBot,
+                    curScene.shadowLight.frustNear,curScene.shadowLight.frustFar);
+
+            static vec3 lightDir,lightPos,lightUp;
+            static float lightDist;
+            lightDir = curScene.shadowLight.direction;  //TODO: Should the directional light always follow the user's lookat point?
+            lightDist = curScene.shadowLight.distance;
+            lightPos = curScene.activeCam->lookatPoint - lightDir*lightDist;
+            lightUp = glm::cross(vec3(lightDir.y,lightDir.x,lightDir.z), curScene.activeCam->lookatPoint-lightPos);
+            lightViewMatrix = glm::lookAt(lightPos, curScene.activeCam->lookatPoint, lightUp);
+
+            // computeShadowDepthMap(lightViewMatrix,lightProjectionMatrix,curScene.toDraw);
+            computeShadowDepthMap(lightViewMatrix,lightProjectionMatrix, curScene.dynamicModels );
+            computeShadowDepthMapStatic( lightViewMatrix, lightProjectionMatrix, g_visibleStaticGameObjects );
+        }
+
+        glViewport(0,0,screenWidth,screenHeight); //TODO: Make this more robust when the user switches to fullscreen
+
+
+
 		//otherProj = glm::perspective(curScene.cameras[lastActiveCamera].FOV * 3.14f / 180, screenWidth / (float)screenHeight, nearPlane, farPlane); //FOV, aspect, near, far
 
         //view = lightViewMatrix; proj = lightProjectionMatrix;  //This was useful to visualize the shadowmap
@@ -460,19 +479,16 @@ int main(int argc,char *argv[]){
         glClearColor(0,0,0,1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        g_frustum.UpdatePlanesExtract( proj * otherCamView );
-
-        g_visibleStaticGameObjects.clear();
-        Cull( &bvh );
-        std::cout << g_visibleStaticGameObjects.size() << std::endl;
+        // std::cout << g_visibleStaticGameObjects.size() << std::endl;
 
         int numDrawn = 0;
         // drawSceneGeometry(curScene.toDraw, view,proj); //Pass 2A: Draw Scene Geometry
         // int numDrawn = drawSceneGeometry( curScene.toDraw, view, proj, otherCamView, otherCamModel, lightViewMatrix, lightProjectionMatrix, useShadowMap );
         if (curScene.currentCam == DEBUG_CAMERA)
         {
-            // drawBVH( bvh, view, proj, otherCamView, otherCamModel );
-            drawAABBs( curScene.dynamicModels, curScene.staticGameobjects, view, proj, otherCamView, otherCamModel );
+            drawBVH( bvh, view, proj, otherCamView, otherCamModel );
+            if ( drawBBS )
+                drawAABBs( curScene.dynamicModels, curScene.staticGameobjects, view, proj, otherCamView, otherCamModel );
         }
         // numDrawn += drawStaticSceneGeometry( curScene.staticGameobjects, view, proj, otherCamView, otherCamModel, lightViewMatrix, lightProjectionMatrix, useShadowMap );
         numDrawn += drawStaticSceneGeometry( g_visibleStaticGameObjects, view, proj, otherCamView, otherCamModel, lightViewMatrix, lightProjectionMatrix, useShadowMap );

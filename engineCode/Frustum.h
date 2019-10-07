@@ -29,4 +29,6 @@ public:
     bool AABBIntersect( const glm::vec3& min, const glm::vec3& max ) const;
 
     glm::vec4 planes[6];
+    glm::vec3 camPos;
+    glm::vec3 camDir;
 };

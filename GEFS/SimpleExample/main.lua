@@ -57,7 +57,7 @@ function keyHandler(keys)
 end
 
 
-id = addModelDynamic("Chalet",0,0.5,2)
+id = addModel("Teapot",0,0.5,2)
 --setModelMaterial(id,"Shiny Red Plastic")
 --setModelMaterial(id,"Steel")
 --animatedModels[id] = true
@@ -67,15 +67,24 @@ numR = 5
 numC = 5
 for r=0,numR do
     for c=0,numC do
-        id = addModel("Teapot", -numR / 2 + 1*r + 10, 0, -numC/2 + 1*c )
+        scale = 2
+        id = addModel("Chalet", -numR*scale + scale*r, 0, -numC*scale + scale*c )
     end
 end
 
-for r=0,numR do
-    for c=0,numC do
-        id = addModel("Knot", -numR / 2 + 1*r -10, 0, -numC/2 + 1*c )
-    end
-end
+--numR = 5
+--numC = 5
+--for r=0,numR do
+--    for c=0,numC do
+--        id = addModel("Teapot", -numR / 2 + 1*r + 10, 0, -numC/2 + 1*c )
+--    end
+--end
+
+--for r=0,numR do
+--    for c=0,numC do
+--        id = addModel("Knot", -numR / 2 + 1*r -10, 0, -numC/2 + 1*c )
+--    end
+--end
 
 --for r=0,numR do
 --	for c=0,numC do
@@ -85,10 +94,10 @@ end
 
 --id = addModel("Dino", 0, 0, 10 )
 
-id = addModelDynamic("Teapot",-5,0,0)
-setModelMaterial(id,"Gold")
-animatedModels[id] = true
-rotYVelModel[id] = 1
+--id = addModelDynamic("Teapot",-5,0,0)
+--setModelMaterial(id,"Gold")
+--animatedModels[id] = true
+--rotYVelModel[id] = 1
 
 --id = addModel("Chalet",0,0,0)
 --setModelMaterial(id,"Gold")
@@ -99,6 +108,7 @@ rotYVelModel[id] = 1
 --placeModel(id,0,-.02,0)
 --scaleModel(id,3,1,3)
 --setModelMaterial(id,"Gold")
+
 --piller = addModel("Dino",0,0,-.15)  --VeryFancyCube
 
 

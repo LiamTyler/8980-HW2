@@ -175,7 +175,7 @@ void loadScene(string fileName){
 
 void BVH::partition(const std::vector<GameObject*>& objs)
 {
-    std::cout << "OBJS size: " << objs.size() << std::endl;
+    // std::cout << "OBJS size: " << objs.size() << std::endl;
 
     _boundingVolume.max = glm::vec3(-FLT_MAX);
     _boundingVolume.min = glm::vec3(FLT_MAX);
@@ -274,7 +274,7 @@ void BVH::partition(const std::vector<GameObject*>& objs)
 
     if (!rightList.empty() && !leftList.empty())
     {
-        std::cout << "BVH num nodes: " << _gameObjects.size() << "\t" << _boundingVolume.min << "\t" << _boundingVolume.max << std::endl;
+        // std::cout << "BVH num nodes: " << _gameObjects.size() << "\t" << _boundingVolume.min << "\t" << _boundingVolume.max << std::endl;
         _right = new BVH(rightList);
         _left = new BVH(leftList);
     }
@@ -288,7 +288,7 @@ void BVH::partition(const std::vector<GameObject*>& objs)
         {
             _gameObjects = leftList;
         }
-        std::cout << "BVH num nodes: " << _gameObjects.size() << "\t" << _boundingVolume.min << "\t" << _boundingVolume.max << std::endl;
+        // std::cout << "BVH num nodes: " << _gameObjects.size() << "\t" << _boundingVolume.min << "\t" << _boundingVolume.max << std::endl;
     }
 
 }
