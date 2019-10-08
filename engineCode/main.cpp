@@ -459,7 +459,7 @@ int main(int argc,char *argv[]){
         //------ PASS 1 - Shadow map ----------------------
         static mat4 lightProjectionMatrix,lightViewMatrix;
 
-        // useShadowMap = false;
+        useShadowMap = false;
         if(useShadowMap && curScene.shadowLight.castShadow){
             //TODO: We can re-use the lightViewMatrix and lightProjectionMatrix if the light doesn't move @performance
             lightProjectionMatrix = glm::ortho(curScene.shadowLight.frustLeft,curScene.shadowLight.frustRight,

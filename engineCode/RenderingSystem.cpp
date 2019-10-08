@@ -202,7 +202,31 @@ void drawGeometry(const Model& model, int materialID, glm::mat4 transform, glm::
     if (!model.modelData) return;
 
     glm::vec3 pos = glm::vec3( transform[3] );
-    if ( !g_frustum.AABBIntersect( model.aabb.min + pos, model.aabb.max + pos ) )
+    auto min = model.aabb.min;
+    auto max = model.aabb.max;
+    auto e = max - min;
+    std::vector< glm::vec3 > points =
+    {
+        min,
+        min + glm::vec3( e.x, 0, 0 ),
+        min + glm::vec3( 0, 0, e.z ),
+        min + glm::vec3( e.x, 0, e.z ),
+        min + glm::vec3( 0, e.y, 0 ),
+        min + glm::vec3( e.x, e.y, 0 ),
+        min + glm::vec3( 0, e.y, e.z ),
+        max,
+    };
+
+    glm::vec3 newMin = glm::vec3( FLT_MAX );
+    glm::vec3 newMax = -glm::vec3( FLT_MAX );
+    for ( const auto& p : points )
+    {
+        auto newP = glm::vec3( transform * glm::vec4( p, 1 ) );
+        newMin = glm::min( newMin, newP );
+        newMax = glm::max( newMax, newP );
+    }
+    // if ( !g_frustum.AABBIntersect( model.aabb.min + pos, model.aabb.max + pos ) )
+    if ( !g_frustum.AABBIntersect( newMin, newMax ) )
     {
         return;
     }
